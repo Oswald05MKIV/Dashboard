@@ -124,6 +124,43 @@ const ALIAS = {
   "cons becerril": "Consuelo Becerril",
   "veronica flores": "Alma Veronica Flores Guzman",
   "joel martinez rodeiguez": "Joel Martínez Rodríguez",
+  "cons ramirez": "Consuelo Ramírez",
+};
+
+/* ------------------------------------------------------------------ */
+/* Asesores dados de baja — ya no aparecen en el dashboard             */
+/* Para dar de baja a alguien: agregar su nombre a esta lista.         */
+/* Para reactivarlo: quitarlo de aquí. No hay que tocar nada más.      */
+/* ------------------------------------------------------------------ */
+const ASESORES_BAJA = [
+  "Lorena Payan",
+  "Ana Escamilla",
+  "Marilú Jasso Reinoso",
+  "Norma Janet Canaan Enciso",
+  "Adriana Cedillo",
+  "Eduardo Franco Navarro",
+  "Lourdes Rodríguez Bautista",
+  "Joel Martínez Rodríguez",
+  "Lucía Calderón",
+  "Susana Ávila Basalrúa",
+];
+
+/** true  = sus operaciones ya cerradas siguen sumando a los totales de la oficina
+ *  false = desaparecen también de los totales, como si nunca hubieran estado */
+const BAJAS_CUENTAN_EN_TOTALES = true;
+
+const BAJA_KEYS = new Set(ASESORES_BAJA.map(strip));
+/** Compara por tokens para aguantar variantes de escritura del mismo nombre. */
+const esBaja = (nombre) => {
+  const key = strip(nombre);
+  if (BAJA_KEYS.has(key)) return true;
+  const toks = key.split(" ").filter((t) => t.length > 2);
+  if (!toks.length) return false;
+  return [...BAJA_KEYS].some((b) => {
+    const btoks = b.split(" ").filter((t) => t.length > 2);
+    const comunes = btoks.filter((t) => toks.includes(t)).length;
+    return comunes >= 2 || (btoks.length === 2 && comunes === 2);
+  });
 };
 
 function resolveAdvisor(raw) {
@@ -148,7 +185,7 @@ const wbAp = XLSX.read(readFileSync(APARTADO_PATH), { cellDates: true });
 const wsC = wbAp.Sheets["CIERRES"] ?? wbAp.Sheets[wbAp.SheetNames[0]];
 const rawOps = XLSX.utils.sheet_to_json(wsC, { header: 1, range: 1, blankrows: false, defval: null });
 
-const COL = { fechaApartado: 0, montoApartado: 1, operacion: 2, tipo: 3, asesor1: 8, asesor2: 11, propiedad: 22, comOficina: 23, comAsesor: 24, estatus: 25, fechaFirma: 26, fechaOperacion: 27, pagado: 28 };
+const COL = { fechaApartado: 0, montoApartado: 1, operacion: 2, tipo: 3, asesor1: 8, asesor2: 11, comTotal: 20, propiedad: 22, comOficina: 23, comAsesor: 24, estatus: 25, fechaFirma: 26, fechaOperacion: 27, pagado: 28 };
 
 let ops = [];
 rawOps.forEach((r, i) => {
@@ -181,6 +218,9 @@ rawOps.forEach((r, i) => {
   ops.push({
     fila: rowNum,
     asesor: asesorFinal,
+    asesor2Raw: r[COL.asesor2] ?? null,
+    comTotal: num(r[COL.comTotal]),
+    esCredito2: false,
     tipo: strip(r[COL.tipo]) === "renta" ? "RENTA" : "VENTA",
     montoOperacion: num(r[COL.operacion]),
     propiedad: String(r[COL.propiedad] ?? "").trim(),
@@ -209,6 +249,64 @@ for (const grupo of grupos.values()) {
   }
   ops.push(keep);
 }
+
+/* ------------------------------------------------------------------ */
+/* 2.a) ASESOR 2 de la oficina — operaciones compartidas internamente   */
+/*                                                                      */
+/* Cuando en la columna ASESOR 2 va un asesor de RE/MAX Terra (se marca  */
+/* escribiendo "Remax Terra" junto al nombre), esa operación también es  */
+/* suya. Se le genera un registro de crédito con lo que le toca:         */
+/*   COMISION TOTAL − COMISION OFICINA − COMISION ASESOR                 */
+/* La comisión de oficina va en 0 para no contarla dos veces, y el       */
+/* crédito no cuenta como apartado ni infla el total de operaciones.     */
+/* No se genera si la operación ya trae su propia fila para ese asesor.  */
+/* ------------------------------------------------------------------ */
+const marcaTerra = (s) => /re\/?max\s+terra/.test(strip(s));
+const OTRAS_OFICINAS = /remax\s+(arcos|si|premier|elite|capital|pro)\b/;
+
+/** Devuelve el asesor interno que va en ASESOR 2, o null si es externo. */
+function asesor2Interno(raw) {
+  if (!raw) return null;
+  const s = strip(raw);
+  if (["", "-", "n/a", "na"].includes(s)) return null;
+  const limpio = String(raw).replace(/re\/?max\s+terra/gi, "").replace(/\s+/g, " ").trim();
+  if (!marcaTerra(raw) && OTRAS_OFICINAS.test(s)) return null; // otra oficina RE/MAX
+  const canon = resolveAdvisor(limpio);
+  if (canon) return canon;
+  // Va marcado como Terra pero no aparece en el roster de OPCIONES
+  // (pasa con la Broker y con quien no captura actividad): se respeta el nombre.
+  if (marcaTerra(raw)) {
+    validation.advertencias.push(`"${limpio}" viene marcado como Remax Terra en ASESOR 2 pero no está en el roster de OPCIONES — se le acredita igual`);
+    return limpio;
+  }
+  return null;
+}
+
+const claveOperacion = (o) => [o.apartadoY, o.apartadoM, strip(o.propiedad).slice(0, 40), o.montoOperacion].join("|");
+const yaTieneFila = new Set(ops.map((o) => `${claveOperacion(o)}::${strip(o.asesor)}`));
+const creditos = [];
+
+for (const o of ops) {
+  if (o.estatus !== "CERRADA" && o.estatus !== "ABIERTA") continue;
+  const a2 = asesor2Interno(o.asesor2Raw);
+  if (!a2 || strip(a2) === strip(o.asesor)) continue;
+  if (yaTieneFila.has(`${claveOperacion(o)}::${strip(a2)}`)) continue; // ya viene en dos filas
+  const residual = Math.max(0, +(o.comTotal - o.comOficina - o.comAsesor).toFixed(2));
+  creditos.push({
+    ...o,
+    asesor: a2,
+    asesor2Raw: o.asesor,
+    comOficina: 0,
+    comAsesor: residual,
+    esCredito2: true,
+    filaOrigen: o.fila,
+    apartadoY: null, apartadoM: null, // el apartado ya se contó en la fila original
+  });
+  yaTieneFila.add(`${claveOperacion(o)}::${strip(a2)}`);
+  validation.nombresNormalizados.push(`Fila ${o.fila}: se acreditó a "${a2}" como ASESOR 2 de la oficina ($${residual.toLocaleString()})`);
+}
+ops.push(...creditos);
+validation.advertencias.push(`Operaciones compartidas con un asesor de la oficina en ASESOR 2: ${creditos.length} créditos generados`);
 
 /* ------------------------------------------------------------------ */
 /* 2.b) MEMBRESIAS — fecha de ingreso (columna "Fecha Sir") por asesor   */
@@ -310,7 +408,12 @@ const advisors = [...advisorNames].sort((a, b) => strip(a).localeCompare(strip(b
   const porCobrar = cierres2026.filter((o) => o.pagado !== "SI");
 
   const cierresMes = emptyMonths(), apartadosMes = emptyMonths(), comOficinaMes = emptyMonths(), comAsesorMes = emptyMonths();
-  cierres2026.forEach((o) => { cierresMes[o.cierreM - 1]++; comOficinaMes[o.cierreM - 1] += o.comOficina; comAsesorMes[o.cierreM - 1] += o.comAsesor; });
+  const cierresPropiosMes = emptyMonths(); // sin los créditos por ir en ASESOR 2 (para no contar la operación dos veces)
+  cierres2026.forEach((o) => {
+    cierresMes[o.cierreM - 1]++;
+    if (!o.esCredito2) cierresPropiosMes[o.cierreM - 1]++;
+    comOficinaMes[o.cierreM - 1] += o.comOficina; comAsesorMes[o.cierreM - 1] += o.comAsesor;
+  });
   apartados2026.forEach((o) => apartadosMes[o.apartadoM - 1]++);
 
   const comOficina = comOficinaMes.reduce((a, b) => a + b, 0);
@@ -341,8 +444,11 @@ const advisors = [...advisorNames].sort((a, b) => strip(a).localeCompare(strip(b
     tarifaMesActual,       // aporte mensual del mes en curso
     metaAnio: META_ANIO,   // meta individual $360,000 (X+Y), año calendario
     actividad: act,
-    cierresMes, apartadosMes, comOficinaMes, comAsesorMes,
+    cierresMes, apartadosMes, comOficinaMes, comAsesorMes, cierresPropiosMes,
     totales: {
+      cierresPropios: cierres2026.filter((o) => !o.esCredito2).length,
+      creditosCompartidos: cierres2026.filter((o) => o.esCredito2).length,
+      pendientesPropios: pendientes.filter((o) => !o.esCredito2).length,
       recorridos: act.recorridos.reduce((a, b) => a + b, 0),
       opciones: act.opciones.reduce((a, b) => a + b, 0),
       opcionadas: act.opcionadas.reduce((a, b) => a + b, 0),
@@ -363,10 +469,20 @@ const advisors = [...advisorNames].sort((a, b) => strip(a).localeCompare(strip(b
 /* ------------------------------------------------------------------ */
 /* 5) Totales globales                                                 */
 /* ------------------------------------------------------------------ */
-const sumBy = (fn) => advisors.reduce((a, x) => a + fn(x), 0);
-const sumMonths = (pick) => Array.from({ length: 12 }, (_, i) => advisors.reduce((a, x) => a + pick(x)[i], 0));
+const advisorsBaja = advisors.filter((a) => esBaja(a.nombre));
+const advisorsVigentes = advisors.filter((a) => !esBaja(a.nombre));
+const advisorsTotales = BAJAS_CUENTAN_EN_TOTALES ? advisors : advisorsVigentes;
 
-const cierres2026All = ops.filter((o) => o.estatus === "CERRADA" && o.cierreY === YEAR);
+advisorsBaja.forEach((a) => validation.advertencias.push(
+  `Asesor dado de baja: "${a.nombre}" — fuera del dashboard` +
+  (a.totales.cierres ? ` (tenía ${a.totales.cierres} cierre(s) ${YEAR} por $${(a.totales.comAsesor).toLocaleString()}, ${BAJAS_CUENTAN_EN_TOTALES ? "siguen contando" : "ya no cuentan"} en los totales de la oficina)` : "")
+));
+
+const sumBy = (fn) => advisorsTotales.reduce((a, x) => a + fn(x), 0);
+const sumMonths = (pick) => Array.from({ length: 12 }, (_, i) => advisorsTotales.reduce((a, x) => a + pick(x)[i], 0));
+
+const cierres2026All = ops.filter((o) => o.estatus === "CERRADA" && o.cierreY === YEAR && !o.esCredito2
+  && (BAJAS_CUENTAN_EN_TOTALES || !esBaja(o.asesor)));
 const totals = {
   recorridos: sumBy((a) => a.totales.recorridos),
   opciones: sumBy((a) => a.totales.opciones),
@@ -375,8 +491,9 @@ const totals = {
   opcionadasVenta: sumBy((a) => a.totales.opcionadasVenta),
   leads: sumBy((a) => a.totales.leads),
   apartados: sumBy((a) => a.totales.apartados),
-  cierres: sumBy((a) => a.totales.cierres),
-  pendientes: sumBy((a) => a.totales.pendientes),
+  cierres: sumBy((a) => a.totales.cierresPropios),      // operaciones, no créditos
+  creditosCompartidos: sumBy((a) => a.totales.creditosCompartidos),
+  pendientes: sumBy((a) => a.totales.pendientesPropios),
   porCobrar: sumBy((a) => a.totales.porCobrar),
   comOficina: sumBy((a) => a.totales.comOficina),
   comAsesor: sumBy((a) => a.totales.comAsesor),
@@ -389,29 +506,70 @@ const totals = {
     opcionadas: sumMonths((a) => a.actividad.opcionadas),
     leads: sumMonths((a) => a.actividad.leads),
     apartados: sumMonths((a) => a.apartadosMes),
-    cierres: sumMonths((a) => a.cierresMes),
+    cierres: sumMonths((a) => a.cierresPropiosMes),
     comOficina: sumMonths((a) => a.comOficinaMes),
     comAsesor: sumMonths((a) => a.comAsesorMes),
   },
 };
 
-const excluidos = advisors.filter((a) => !a.enRoster && !a.activo);
+const excluidos = advisorsVigentes.filter((a) => !a.enRoster && !a.activo);
 excluidos.forEach((a) => validation.advertencias.push(`Asesor externo "${a.nombre}" sin actividad ${YEAR} (solo operaciones de años anteriores) — excluido del dashboard`));
-const advisorsFinal = advisors.filter((a) => !excluidos.includes(a));
+const advisorsFinal = advisorsVigentes.filter((a) => !excluidos.includes(a));
 
 // Desglose del cohorte (meta escalonada por antigüedad, medida vs columna Y)
 const cohorte = {
-  metaMensual: advisors.reduce((a, x) => a + (x.tarifaMesActual || 0), 0), // lo que el grupo debe generar este mes
-  esperadoAcumulado: advisors.reduce((a, x) => a + (x.metaAntiguedad || 0), 0), // lo que deberían llevar a la fecha
-  realAcumulado: advisors.reduce((a, x) => a + x.totales.comAsesor, 0), // lo que llevan (columna Y)
-  asesoresConMeta: advisors.filter((x) => x.metaAntiguedad != null && x.metaAntiguedad > 0).length,
+  metaMensual: advisorsFinal.reduce((a, x) => a + (x.tarifaMesActual || 0), 0), // lo que el grupo debe generar este mes
+  esperadoAcumulado: advisorsFinal.reduce((a, x) => a + (x.metaAntiguedad || 0), 0), // lo que deberían llevar a la fecha
+  realAcumulado: advisorsFinal.reduce((a, x) => a + x.totales.comAsesor, 0), // lo que llevan (columna Y)
+  asesoresConMeta: advisorsFinal.filter((x) => x.metaAntiguedad != null && x.metaAntiguedad > 0).length,
 };
 cohorte.diferencia = cohorte.realAcumulado - cohorte.esperadoAcumulado;
 cohorte.avancePct = cohorte.esperadoAcumulado > 0 ? (cohorte.realAcumulado / cohorte.esperadoAcumulado) * 100 : 0;
 
+/* ------------------------------------------------------------------ */
+/* 6) Leads — acumulado del último cuatrimestre                        */
+/*    Son los 4 meses COMPLETOS anteriores al mes en curso.            */
+/*    El mes en curso va aparte porque todavía no termina.             */
+/* ------------------------------------------------------------------ */
+const mesEnCursoIncompleto = currentMonth;
+const mesesCuatrimestre = [];
+for (let m = mesEnCursoIncompleto - 4; m < mesEnCursoIncompleto; m++) if (m >= 1) mesesCuatrimestre.push(m);
+
+const leadsDe = (adv, m) => adv.actividad.leads[m - 1] || 0;
+const filasCuatrimestre = advisorsFinal
+  .map((a) => {
+    const meses = mesesCuatrimestre.map((m) => leadsDe(a, m));
+    const total = meses.reduce((x, y) => x + y, 0);
+    return {
+      nombre: a.nombre,
+      meses,
+      total,
+      promedio: mesesCuatrimestre.length ? +(total / mesesCuatrimestre.length).toFixed(1) : 0,
+      mesEnCurso: leadsDe(a, mesEnCursoIncompleto),
+    };
+  })
+  .sort((a, b) => b.total - a.total);
+
+const totalCuatrimestre = filasCuatrimestre.reduce((a, x) => a + x.total, 0);
+const leadsCuatrimestre = {
+  meses: mesesCuatrimestre,
+  etiquetas: mesesCuatrimestre.map((m) => MESES[m - 1]),
+  total: totalCuatrimestre,
+  promedioMensual: mesesCuatrimestre.length ? +(totalCuatrimestre / mesesCuatrimestre.length).toFixed(1) : 0,
+  totalPorMes: mesesCuatrimestre.map((m) => filasCuatrimestre.reduce((a, x) => a + x.meses[mesesCuatrimestre.indexOf(m)], 0)),
+  mesEnCurso: {
+    mes: mesEnCursoIncompleto,
+    etiqueta: MESES[mesEnCursoIncompleto - 1],
+    total: filasCuatrimestre.reduce((a, x) => a + x.mesEnCurso, 0),
+    incompleto: true,
+  },
+  porAsesor: filasCuatrimestre,
+};
+
 const dashboard = {
   year: YEAR,
   cohorte,
+  leadsCuatrimestre,
   currentMonth, previousMonth,
   mesesDisponibles: [...mesesConDatos].sort((a, b) => a - b),
   generadoEl: new Date().toISOString(),
