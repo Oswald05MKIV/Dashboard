@@ -241,3 +241,122 @@
 
 /* botones del encabezado de Teams */
 .tt-acciones { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+/* =====================================================================
+   Teams · civilizaciones y mapa de conquista
+   Todo con prefijo .tt- para no tocar el resto del dashboard.
+   ===================================================================== */
+
+/* estandarte en el encabezado de cada tarjeta (sustituye al punto de color) */
+.tt-team__flag { flex: none; filter: drop-shadow(0 1px 1px rgba(14, 26, 43, 0.18)); }
+
+/* ---------- ondear discreto de banderas ---------- */
+.tt-ondear { transform-box: fill-box; transform-origin: 0 0; }
+@media (prefers-reduced-motion: no-preference) {
+  .tt-ondear { animation: tt-ondear 3.6s ease-in-out infinite; }
+  @keyframes tt-ondear {
+    0%, 100% { transform: skewY(0deg) scaleX(1); }
+    50% { transform: skewY(1.8deg) scaleX(0.985); }
+  }
+}
+
+/* ---------- sección del mapa ---------- */
+.tt-mapa-seccion { margin-top: 16px; }
+.tt-fijo .tt-mapa-seccion { max-width: 1304px; }
+.tt-mapa { gap: 14px; }
+.tt-mapa__lienzo { position: relative; }
+.tt-mapa__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 1px rgba(90, 70, 50, 0.25);
+  font-family: Georgia, "Times New Roman", serif;
+  user-select: none;
+}
+.tt-mapa__nota { margin: 0; font-size: 11.5px; color: var(--tt-muted); line-height: 1.45; }
+
+/* textos dentro del mapa */
+.tt-mapa__titulo { font-size: 15px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; fill: #5a4632; }
+.tt-mapa__subtitulo { font-size: 9px; letter-spacing: 0.04em; fill: #5a4632; }
+.tt-mapa__ciudad { font-size: 10.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; fill: #3f3022; paint-order: stroke; stroke: #f3ead6; stroke-width: 3px; stroke-linejoin: round; }
+.tt-mapa__rosa { font-size: 12px; font-weight: 700; fill: #5a4632; }
+.tt-mapa__escala { font-size: 9px; fill: #5a4632; stroke: none; }
+
+/* territorio: transición suave cuando cambia el reparto */
+.tt-territorio path { transition: fill-opacity 0.6s ease, opacity 0.6s ease; }
+
+/* ciudades: brillo ligero */
+.tt-ciudad__halo { opacity: 0.16; }
+@media (prefers-reduced-motion: no-preference) {
+  .tt-ciudad__halo { animation: tt-halo 4s ease-in-out infinite; }
+  @keyframes tt-halo { 0%, 100% { opacity: 0.12; } 50% { opacity: 0.26; } }
+}
+
+/* soldados */
+.tt-soldado { cursor: pointer; outline: none; }
+.tt-soldado__cuerpo { transform-box: fill-box; transform-origin: 50% 100%; }
+@media (prefers-reduced-motion: no-preference) {
+  .tt-soldado__cuerpo { animation: tt-idle 3.2s ease-in-out infinite; animation-delay: var(--tt-idle, 0s); }
+  @keyframes tt-idle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1.6px); } }
+}
+.tt-soldado:hover .tt-soldado__cuerpo, .tt-soldado:focus-visible .tt-soldado__cuerpo { transform: translateY(-2px); animation: none; }
+.tt-soldado__name {
+  font-family: ui-sans-serif, system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 12.5px; font-weight: 700; fill: #2b2117;
+  paint-order: stroke; stroke: rgba(246, 239, 221, 0.92); stroke-width: 4px; stroke-linejoin: round;
+}
+.tt-soldado--sel .tt-soldado__name { fill: #0e1a2b; }
+
+/* leyenda de dominio */
+.tt-leyenda {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 8px;
+}
+.tt-leyenda__item {
+  display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 9px;
+  padding: 8px 10px; border-radius: 10px; background: var(--tt-canvas); border: 1px solid var(--tt-line);
+  border-left: 3px solid var(--tt-team);
+}
+.tt-leyenda__txt { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.tt-leyenda__name { font-size: 13px; font-weight: 800; letter-spacing: -0.01em; }
+.tt-leyenda__meta { font-size: 10.5px; color: var(--tt-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tt-leyenda__bar { display: block; height: 4px; border-radius: 3px; background: var(--tt-line); overflow: hidden; }
+.tt-leyenda__bar > span { display: block; height: 100%; background: var(--tt-team); transition: width 0.6s ease; }
+.tt-leyenda__pct { font-size: 15px; font-weight: 800; letter-spacing: -0.02em; }
+
+/* panel del asesor (sobre el mapa) */
+.tt-panel {
+  position: absolute; top: 12px; right: 12px;
+  width: min(330px, calc(100% - 24px)); max-height: calc(100% - 24px); overflow: auto;
+  background: var(--tt-surface); border: 1px solid var(--tt-line); border-top: 4px solid var(--tt-team);
+  border-radius: 12px; padding: 12px 14px 14px; box-shadow: 0 12px 32px rgba(14, 26, 43, 0.22);
+  font-size: 12.5px; z-index: 5;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .tt-panel { animation: tt-in 0.18s ease-out; }
+}
+.tt-panel__head { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: start; margin-bottom: 8px; }
+.tt-panel__team { margin: 0; font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tt-team-ink); }
+.tt-panel__name { margin: 2px 0 0; font-size: 16px; font-weight: 800; letter-spacing: -0.01em; }
+.tt-panel__sub { margin: 2px 0 0; font-size: 11px; color: var(--tt-muted); }
+.tt-panel__close {
+  border: 1px solid var(--tt-line); background: var(--tt-surface); color: var(--tt-muted);
+  width: 26px; height: 26px; border-radius: 50%; font-size: 16px; line-height: 1; cursor: pointer;
+}
+.tt-panel__close:hover { background: var(--tt-canvas); color: var(--tt-ink); }
+.tt-panel__section {
+  margin: 10px 0 2px; font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--tt-muted); border-bottom: 1px solid var(--tt-line); padding-bottom: 3px;
+}
+.tt-panel__row { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; border-bottom: 1px solid #f1f4f8; }
+.tt-panel__row span { color: var(--tt-muted); }
+.tt-panel__row strong { font-weight: 700; white-space: nowrap; }
+.tt-panel__bar { height: 6px; border-radius: 4px; background: var(--tt-line); overflow: hidden; margin: 8px 0 4px; }
+.tt-panel__bar > span { display: block; height: 100%; background: var(--tt-team); }
+.tt-panel__link { display: inline-block; margin-top: 8px; font-size: 12px; font-weight: 700; color: var(--tt-blue); text-decoration: none; }
+.tt-panel__link:hover { text-decoration: underline; }
+
+@media (max-width: 560px) {
+  .tt-panel { top: auto; bottom: 10px; left: 10px; right: 10px; width: auto; max-height: 70%; }
+}

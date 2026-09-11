@@ -11,6 +11,8 @@ export type TotalTeam = {
 
 export type IntegranteTeam = TotalTeam & { nombre: string; sinDatos?: boolean };
 
+// `nombre` es el nombre que se muestra (civilización); `color` es la clave interna
+// estable del equipo y es lo que usan los estandartes, soldados y el mapa.
 export type Team = {
   nombre: string;
   color: ColorTeam;
@@ -18,12 +20,13 @@ export type Team = {
   total: TotalTeam;
 };
 
-export const agosto2026Teams: { teams: Team[]; teamsNota: string } = {
+export const agosto2026Teams: { periodo: string; teams: Team[]; teamsNota: string } = {
+  periodo: 'Agosto 2026',
   teamsNota:
     'Agosto 2026 es el primer mes con medicion por equipo. Los integrantes dados de alta este mes todavia no tienen captura en los archivos fuente y aparecen marcados como sin datos.',
   teams: [
     {
-      nombre: 'Team Red-Delta',
+      nombre: 'Chinos',
       color: 'red',
       integrantes: [
         { nombre: 'Erik Trotter', recorridos: 2, mostradas: 6, opcionadas: 4, leads: 0, rentas: 0, ventas: 0 },
@@ -34,20 +37,19 @@ export const agosto2026Teams: { teams: Team[]; teamsNota: string } = {
       total: { recorridos: 3, mostradas: 7, opcionadas: 5, leads: 0, rentas: 0, ventas: 0 },
     },
     {
-      nombre: 'Team Blue-Echo',
+      nombre: 'Aztecas',
       color: 'blue',
       integrantes: [
         { nombre: 'Pily González', recorridos: 0, mostradas: 0, opcionadas: 0, leads: 0, rentas: 0, ventas: 1980000 },
         { nombre: 'Luis Alcántar', recorridos: 0, mostradas: 0, opcionadas: 0, leads: 0, rentas: 0, ventas: 0 },
         { nombre: 'Adri Regalado', recorridos: 5, mostradas: 5, opcionadas: 0, leads: 0, rentas: 16000, ventas: 0 },
         { nombre: 'Gis García', recorridos: 9, mostradas: 15, opcionadas: 2, leads: 0, rentas: 28800, ventas: 0 },
-        { nombre: 'Edgar', recorridos: 0, mostradas: 0, opcionadas: 0, leads: 0, rentas: 0, ventas: 0, sinDatos: true },
         { nombre: 'Noe', recorridos: 0, mostradas: 0, opcionadas: 0, leads: 0, rentas: 0, ventas: 0, sinDatos: true },
       ],
       total: { recorridos: 14, mostradas: 20, opcionadas: 2, leads: 0, rentas: 44800, ventas: 1980000 },
     },
     {
-      nombre: 'Team White-Bravo',
+      nombre: 'Persas',
       color: 'white',
       integrantes: [
         { nombre: 'Sol Huerta', recorridos: 2, mostradas: 5, opcionadas: 9, leads: 0, rentas: 0, ventas: 0 },
@@ -59,7 +61,7 @@ export const agosto2026Teams: { teams: Team[]; teamsNota: string } = {
       total: { recorridos: 21, mostradas: 30, opcionadas: 11, leads: 0, rentas: 23000, ventas: 0 },
     },
     {
-      nombre: 'Team Romeo-Green',
+      nombre: 'Griegos',
       color: 'green',
       integrantes: [
         { nombre: 'Mariana Vega', recorridos: 11, mostradas: 20, opcionadas: 3, leads: 0, rentas: 13000, ventas: 0 },
@@ -70,19 +72,18 @@ export const agosto2026Teams: { teams: Team[]; teamsNota: string } = {
       total: { recorridos: 13, mostradas: 27, opcionadas: 6, leads: 0, rentas: 48000, ventas: 0 },
     },
     {
-      nombre: 'Team Kilo-Purple',
+      nombre: 'Troyanos',
       color: 'purple',
       integrantes: [
         { nombre: 'Judith Diosdado', recorridos: 2, mostradas: 3, opcionadas: 0, leads: 0, rentas: 8000, ventas: 0 },
         { nombre: 'Susana Ávila', recorridos: 0, mostradas: 0, opcionadas: 1, leads: 0, rentas: 0, ventas: 0 },
         { nombre: 'Angie Bostal', recorridos: 0, mostradas: 0, opcionadas: 4, leads: 0, rentas: 26170, ventas: 0 },
-        { nombre: 'Cintia', recorridos: 0, mostradas: 0, opcionadas: 0, leads: 0, rentas: 0, ventas: 0, sinDatos: true },
         { nombre: 'Olivia', recorridos: 0, mostradas: 0, opcionadas: 0, leads: 0, rentas: 0, ventas: 0, sinDatos: true },
       ],
       total: { recorridos: 2, mostradas: 3, opcionadas: 5, leads: 0, rentas: 34170, ventas: 0 },
     },
     {
-      nombre: 'Team Orange-Charlie',
+      nombre: 'Romanos',
       color: 'orange',
       integrantes: [
         { nombre: 'Lore Ramos', recorridos: 15, mostradas: 20, opcionadas: 3, leads: 0, rentas: 50700, ventas: 1200000 },

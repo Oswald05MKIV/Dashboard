@@ -16,6 +16,8 @@ import { META_ANUAL_ASESOR, MESES_CORTOS, MESES_LARGOS } from "../config";
 import { fMoney, fNum, nivelSemaforo, rankOf, safeDiv } from "../lib/metrics";
 import { Avatar, Card, Delta, MonthChip, PageHead, Progress, SemaforoBadge } from "../components/ui";
 import { BarrasMensuales } from "../components/charts";
+import LeadsCuatrimestreAsesor from "../components/LeadsCuatrimestreAsesor";
+import { leadsCuatrimestreDe } from "../lib/leadsCuatrimestre";
 
 export function Asesores({ data, selected, onSelect, onBack }: {
   data: DashboardData;
@@ -117,6 +119,7 @@ function AsesorDetalle({ data, advisor: a, onBack }: { data: DashboardData; advi
   const opc = parMes(a.actividad.opciones);
   const opd = parMes(a.actividad.opcionadas);
   const cie = parMes(a.cierresMes);
+  const cuatri = leadsCuatrimestreDe(a.nombre);
 
   return (
     <>
@@ -143,6 +146,7 @@ function AsesorDetalle({ data, advisor: a, onBack }: { data: DashboardData; advi
         <Card title="Leads recibidos" icon={<Inbox size={14} />}>
           <MesVsMes actual={led.actual} anterior={led.anterior} cm={cm} pm={pm} />
           <div className="pair-row" style={{ marginTop: 4 }}><span className="k">Total {data.year} (ene–{MESES_CORTOS[ci].toLowerCase()})</span><span className="v num">{fNum(a.totales.leads)}</span></div>
+          {cuatri && <div className="pair-row"><span className="k">Último cuatrimestre</span><span className="v num">{fNum(cuatri.total)}</span></div>}
         </Card>
         <Card title="Recorridos" icon={<Route size={14} />}>
           <MesVsMes actual={rec.actual} anterior={rec.anterior} cm={cm} pm={pm} />
@@ -163,6 +167,8 @@ function AsesorDetalle({ data, advisor: a, onBack }: { data: DashboardData; advi
           <BarrasMensuales series={a.actividad.leads} hasta={cm} alto={170} />
         </Card>
       </div>
+
+      <LeadsCuatrimestreAsesor nombre={a.nombre} />
 
       <div className="two-col section">
         <Card title="Cierres" icon={<CheckCircle2 size={14} />}>

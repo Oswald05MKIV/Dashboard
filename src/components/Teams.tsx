@@ -1,18 +1,11 @@
 import { useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { agosto2026Teams } from '../data/agosto2026Teams';
-import type { ColorTeam, Team, TotalTeam } from '../data/agosto2026Teams';
+import type { Team, TotalTeam } from '../data/agosto2026Teams';
+import { Estandarte, PALETA } from './civilizaciones';
+import MapaConquista from './MapaConquista';
 import { BotonCaptura, useAviso } from './TopsJulio';
 import './tops-teams.css';
-
-const PALETA: Record<ColorTeam, { base: string; suave: string; linea: string; texto: string }> = {
-  red: { base: '#e4002b', suave: '#fde7eb', linea: '#f7bcc7', texto: '#a10020' },
-  blue: { base: '#0057b8', suave: '#e5eefa', linea: '#b9d0ee', texto: '#013f86' },
-  white: { base: '#5b6472', suave: '#eef1f5', linea: '#d3dae3', texto: '#3b434f' },
-  green: { base: '#1e9e5a', suave: '#e5f5ec', linea: '#b6e0c8', texto: '#14713f' },
-  purple: { base: '#7a4fce', suave: '#f0eafb', linea: '#d3c3f0', texto: '#563394' },
-  orange: { base: '#f07314', suave: '#fdeee0', linea: '#f8cda3', texto: '#a94c07' },
-};
 
 const mxn = (n: number) =>
   n.toLocaleString('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 });
@@ -64,7 +57,7 @@ function TarjetaTeam({ team, insignias, onAviso }: { team: Team; insignias: stri
       <header className="tt-card__top">
         <div>
           <h3 className="tt-team__name">
-            <span className="tt-dot" />
+            <Estandarte clave={team.color} alto={26} className="tt-team__flag" />
             {team.nombre}
           </h3>
           {insignias.length > 0 && (
@@ -148,7 +141,7 @@ export default function Teams() {
           <p className="tt-eyebrow">RE/MAX Terra · Equipos</p>
           <h2 className="tt-title">Teams</h2>
           <p className="tt-sub">
-            Seis equipos con los mismos indicadores del mes sumados por equipo. Los montos son el
+            Seis civilizaciones con los mismos indicadores del mes sumados por equipo. Los montos son el
             total de la operación de lo cerrado dentro del periodo.
           </p>
         </div>
@@ -173,6 +166,10 @@ export default function Teams() {
         {teams.map((t) => (
           <TarjetaTeam key={t.nombre} team={t} insignias={insignias[t.nombre] ?? []} onAviso={mostrar} />
         ))}
+      </div>
+
+      <div className="tt-mapa-seccion">
+        <MapaConquista teams={teams} periodo={agosto2026Teams.periodo} onAviso={mostrar} />
       </div>
 
       <p className="tt-foot">
