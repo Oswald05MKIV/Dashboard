@@ -17,16 +17,17 @@ const VARS_CAPTURA = {
 } as CSSProperties;
 
 // Secciones por antigüedad, con el criterio de la hoja "Antiguedad" del archivo
-// de membresías (años calendario desde el ingreso).
-type ClaveGrupo = "2" | "1" | "0" | "sin";
-const GRUPOS: { clave: ClaveGrupo; titulo: string; archivo: string }[] = [
-  { clave: "2", titulo: "2 años o más", archivo: "2-anios" },
-  { clave: "1", titulo: "1 año", archivo: "1-anio" },
-  { clave: "0", titulo: "Menos de 1 año", archivo: "menos-1-anio" },
-  { clave: "sin", titulo: "Sin fecha de ingreso", archivo: "sin-fecha" },
+// de membresías (años calendario desde el ingreso). Los que llevan menos de
+// 3 meses desde su ingreso van aparte, en "Prueba".
+type ClaveGrupo = "2" | "1" | "0" | "prueba" | "sin";
+const MESES_PRUEBA = 3;
+const GRUPOS: { clave: ClaveGrupo; titulo: string }[] = [
+  { clave: "2", titulo: "2 años" },
+  { clave: "1", titulo: "1 año" },
+  { clave: "0", titulo: "Menos de 1 año" },
+  { clave: "prueba", titulo: "Prueba" },
+  { clave: "sin", titulo: "Sin fecha de ingreso" },
 ];
-const grupoAntig = (anios: number | null | undefined): ClaveGrupo =>
-  anios == null ? "sin" : anios >= 2 ? "2" : anios === 1 ? "1" : "0";
 
 type FilaMeta = {
   a: DashboardData["advisors"][number];
@@ -35,23 +36,40 @@ type FilaMeta = {
   pctAntig: number | null;
 };
 
-function TablaGrupo({
-  titulo, archivo, corte, filas, onSelect, onAviso,
+const grupoDe = ({ a }: FilaMeta): ClaveGrupo => {
+  if (a.aniosAntiguedad == null) return "sin";
+  if (a.mesesDesdeIngreso != null && a.mesesDesdeIngreso < MESES_PRUEBA) return "prueba";
+  return a.aniosAntiguedad >= 2 ? "2" : a.aniosAntiguedad === 1 ? "1" : "0";
+};
+
+// Franja divisoria entre secciones: azul RE/MAX del dashboard.
+const estiloFranja: CSSProperties = {
+  background: "var(--rx-blue)",
+  color: "#fff",
+  fontFamily: "var(--font-display)",
+  fontSize: 12,
+  fontWeight: 700,
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+  padding: "9px 12px",
+};
+
+function TablaAntiguedad({
+  corte, filas, archivo, onSelect, onAviso,
 }: {
-  titulo: string;
-  archivo: string;
   corte: string;
   filas: FilaMeta[];
+  archivo: string;
   onSelect: (n: string) => void;
   onAviso: (m: string) => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   return (
     <div className="section" ref={ref} style={VARS_CAPTURA}>
-      <Card title={`Avance individual · Meta Anual · ${titulo}`} icon={<Users size={14} />}>
+      <Card title="Avance individual · Meta Anual" icon={<Users size={14} />}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 12 }}>
           <span className="kpi-sub">
-            {corte} · {filas.length} {filas.length === 1 ? "asesor" : "asesores"} · ordenado por color del cohorte, de mejor a peor
+            {corte} · {filas.length} asesores · por antigüedad y color del cohorte, de mejor a peor
           </span>
           <BotonCaptura destino={ref} archivo={archivo} onAviso={onAviso} />
         </div>
@@ -65,33 +83,47 @@ function TablaGrupo({
                 <th>Cohorte</th>
               </tr>
             </thead>
-            <tbody>
-              {filas.map(({ a, pctAnual, tieneAntig, pctAntig }) => {
-                const meses = a.mesesDesdeIngreso ?? a.mesesAntiguedad;
-                return (
-                  <tr key={a.nombre} className="clickable" onClick={() => onSelect(a.nombre)}>
-                    <td>
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
-                        <Avatar nombre={a.nombre} />
-                        <span style={{ fontWeight: 600 }}>{a.nombre}</span>
+            {GRUPOS.map((g) => {
+              const del = filas.filter((x) => grupoDe(x) === g.clave);
+              if (!del.length) return null;
+              return (
+                <tbody key={g.clave}>
+                  <tr>
+                    <td colSpan={4} style={estiloFranja}>
+                      {g.titulo}
+                      <span style={{ fontWeight: 500, opacity: 0.8, marginLeft: 8, letterSpacing: "0.04em" }}>
+                        · {del.length} {del.length === 1 ? "asesor" : "asesores"}
                       </span>
                     </td>
-                    <td className="r num">{a.fechaSir ? `${meses} ${meses === 1 ? "mes" : "meses"}` : "—"}</td>
-                    <td>
-                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <div style={{ flex: 1 }}><Progress pct={pctAnual} /></div>
-                        <span className="num" style={{ fontSize: 12, fontWeight: 600, minWidth: 42, textAlign: "right" }}>{pctAnual.toFixed(0)}%</span>
-                      </div>
-                    </td>
-                    <td>
-                      {tieneAntig
-                        ? <SemaforoBadge pct={pctAntig!} />
-                        : <span className="badge neutral">{a.fechaSir ? "En capacitación" : "Sin fecha"}</span>}
-                    </td>
                   </tr>
-                );
-              })}
-            </tbody>
+                  {del.map(({ a, pctAnual, tieneAntig, pctAntig }) => {
+                    const meses = a.mesesDesdeIngreso ?? a.mesesAntiguedad;
+                    return (
+                      <tr key={a.nombre} className="clickable" onClick={() => onSelect(a.nombre)}>
+                        <td>
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
+                            <Avatar nombre={a.nombre} />
+                            <span style={{ fontWeight: 600 }}>{a.nombre}</span>
+                          </span>
+                        </td>
+                        <td className="r num">{a.fechaSir ? `${meses} ${meses === 1 ? "mes" : "meses"}` : "—"}</td>
+                        <td>
+                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                            <div style={{ flex: 1 }}><Progress pct={pctAnual} /></div>
+                            <span className="num" style={{ fontSize: 12, fontWeight: 600, minWidth: 42, textAlign: "right" }}>{pctAnual.toFixed(0)}%</span>
+                          </div>
+                        </td>
+                        <td>
+                          {tieneAntig
+                            ? <SemaforoBadge pct={pctAntig!} />
+                            : <span className="badge neutral">{a.fechaSir ? "En capacitación" : "Sin fecha"}</span>}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              );
+            })}
           </table>
         </div>
       </Card>
@@ -181,22 +213,14 @@ export function Metas({ data, onSelect }: { data: DashboardData; onSelect: (n: s
         </Card>
       </div>
 
-      {/* ---- Tablas individuales por antigüedad: meta anual + % del cohorte ---- */}
-      {GRUPOS.map((g) => {
-        const filas = listaTabla.filter((x) => grupoAntig(x.a.aniosAntiguedad) === g.clave);
-        if (!filas.length) return null;
-        return (
-          <TablaGrupo
-            key={g.clave}
-            titulo={g.titulo}
-            archivo={`metas-anual-${g.archivo}-${mesCorte.toLowerCase()}-${data.year}`}
-            corte={`Corte ${mesCorte.toLowerCase()} ${data.year}`}
-            filas={filas}
-            onSelect={onSelect}
-            onAviso={mostrar}
-          />
-        );
-      })}
+      {/* ---- Tabla individual por antigüedad (una sola imagen) ---- */}
+      <TablaAntiguedad
+        corte={`Corte ${mesCorte.toLowerCase()} ${data.year}`}
+        filas={listaTabla}
+        archivo={`metas-anual-${mesCorte.toLowerCase()}-${data.year}`}
+        onSelect={onSelect}
+        onAviso={mostrar}
+      />
       {aviso && <div className="tt-toast" style={VARS_CAPTURA}>{aviso}</div>}
     </>
   );

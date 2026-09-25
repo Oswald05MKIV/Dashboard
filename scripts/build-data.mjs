@@ -113,6 +113,20 @@ for (const { name, month } of monthSheets) {
   }
 }
 
+// Altas manuales: asesores nuevos que ya están en membresías pero todavía no
+// aparecen en OPCIONES. Se agregan al roster y se consideran activos.
+// Cuando ya salgan en OPCIONES se pueden quitar de aquí sin problema.
+const ASESORES_ALTA = [
+  "Rocío Ávalos",
+  "Olivia Flores",
+  "Sophie de la Torre",
+];
+for (const n of ASESORES_ALTA) {
+  const key = strip(n);
+  if (!rosterSet.has(key)) rosterSet.set(key, n);
+}
+const ALTA_KEYS = new Set(ASESORES_ALTA.map(strip));
+
 /* ------------------------------------------------------------------ */
 /* Normalización de nombres (OPCIONES = roster canónico)               */
 /* ------------------------------------------------------------------ */
@@ -477,7 +491,7 @@ const advisors = [...advisorNames].sort((a, b) => strip(a).localeCompare(strip(b
   return {
     nombre: name,
     enRoster,
-    activo: enMesActual || con2026,
+    activo: enMesActual || con2026 || ALTA_KEYS.has(strip(name)),
     fechaSir: fSir ? `${fSir.y}-${String(fSir.m).padStart(2, "0")}` : null,
     aniosAntiguedad,
     mesesDesdeIngreso,
