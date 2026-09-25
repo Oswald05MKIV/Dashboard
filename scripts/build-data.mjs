@@ -145,6 +145,7 @@ const ASESORES_BAJA = [
   "Susana Ávila Basalrúa",
   "Luis Eduardo Duval de las Casas",
   "Ivette Camacho",
+  "Susana Cruz",
 ];
 
 /** true  = sus operaciones ya cerradas siguen sumando a los totales de la oficina

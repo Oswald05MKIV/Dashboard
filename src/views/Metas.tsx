@@ -3,9 +3,24 @@ import type { DashboardData } from "../types";
 import { META_ANUAL_ASESOR, MESES_LARGOS } from "../config";
 import { fMoney, fPct, nivelSemaforo, safeDiv } from "../lib/metrics";
 import { Avatar, Card, Kpi, MonthChip, PageHead, Progress, SemaforoBadge } from "../components/ui";
+import { useRef } from "react";
+import type { CSSProperties } from "react";
+import { BotonCaptura, useAviso } from "../components/TopsJulio";
+
+// Variables de color que usan el botón de captura y el aviso (.tt-cap / .tt-toast).
+const VARS_CAPTURA = {
+  "--tt-ink": "#0e1a2b",
+  "--tt-line": "#e6eaf0",
+  "--tt-surface": "#ffffff",
+  "--tt-canvas": "#f6f8fb",
+  "--tt-blue": "#003da5",
+} as CSSProperties;
 
 export function Metas({ data, onSelect }: { data: DashboardData; onSelect: (n: string) => void }) {
   const c = data.cohorte;
+  const refTabla = useRef<HTMLDivElement>(null);
+  const { aviso, mostrar } = useAviso();
+  const mesCorte = MESES_LARGOS[data.currentMonth - 1];
 
   // Meta anual individual ($360,000 sobre X+Y)
   const lista = data.advisors
@@ -85,8 +100,14 @@ export function Metas({ data, onSelect }: { data: DashboardData; onSelect: (n: s
       </div>
 
       {/* ---- Tabla individual: meta anual + % del cohorte ---- */}
-      <div className="section">
+      <div className="section" ref={refTabla} style={VARS_CAPTURA}>
         <Card title="Avance individual · Meta Anual" icon={<Users size={14} />}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 12 }}>
+            <span className="kpi-sub">
+              Corte {mesCorte.toLowerCase()} {data.year} · ordenado por color del cohorte, de mejor a peor
+            </span>
+            <BotonCaptura destino={refTabla} archivo={`metas-anual-${mesCorte.toLowerCase()}-${data.year}`} onAviso={mostrar} />
+          </div>
           <div className="table-wrap">
             <table className="data">
               <thead>
@@ -125,6 +146,7 @@ export function Metas({ data, onSelect }: { data: DashboardData; onSelect: (n: s
           </div>
         </Card>
       </div>
+      {aviso && <div className="tt-toast" style={VARS_CAPTURA}>{aviso}</div>}
     </>
   );
 }
