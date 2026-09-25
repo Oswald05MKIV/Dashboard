@@ -18,6 +18,21 @@ export function Metas({ data, onSelect }: { data: DashboardData; onSelect: (n: s
     }))
     .sort((x, y) => y.pctAnual - x.pctAnual);
 
+  // Orden de la tabla individual: por color del semáforo del cohorte
+  // (verde → ámbar → rojo → sin meta de cohorte) y dentro de cada color
+  // de mejor a peor porcentaje del cohorte.
+  const ORDEN_COLOR = { ok: 0, warn: 1, bad: 2 } as const;
+  const grupo = (x: (typeof lista)[number]) =>
+    x.tieneAntig && x.pctAntig != null ? ORDEN_COLOR[nivelSemaforo(x.pctAntig)] : 3;
+  const listaTabla = [...lista].sort((x, y) => {
+    const g = grupo(x) - grupo(y);
+    if (g !== 0) return g;
+    const px = x.pctAntig ?? -1;
+    const py = y.pctAntig ?? -1;
+    if (py !== px) return py - px;
+    return y.pctAnual - x.pctAnual;
+  });
+
   const enMeta = lista.filter((x) => x.pctAnual >= 75).length;
   const enRiesgo = lista.filter((x) => x.pctAnual >= 50 && x.pctAnual < 75).length;
   const criticos = lista.filter((x) => x.pctAnual < 50).length;
@@ -69,25 +84,21 @@ export function Metas({ data, onSelect }: { data: DashboardData; onSelect: (n: s
         </Card>
       </div>
 
-      {/* ---- Tabla individual: dos metas ---- */}
+      {/* ---- Tabla individual: meta anual + % del cohorte ---- */}
       <div className="section">
-        <Card title="Avance individual · meta anual (X + Y) y aporte al cohorte (Y)" icon={<Users size={14} />}>
+        <Card title="Avance individual · Meta Anual" icon={<Users size={14} />}>
           <div className="table-wrap">
             <table className="data">
               <thead>
                 <tr>
                   <th>Asesor</th>
-                  <th className="r">Antig.</th>
-                  <th className="r">Meta anual (X+Y)</th>
-                  <th className="r">Logrado (X+Y)</th>
-                  <th style={{ width: "18%" }}>Avance anual</th>
-                  <th className="r">Debería (Y)</th>
-                  <th className="r">Lleva (Y)</th>
+                  <th className="r">Antigüedad</th>
+                  <th style={{ width: "40%" }}>Avance anual ({fMoney(META_ANUAL_ASESOR)})</th>
                   <th>Cohorte</th>
                 </tr>
               </thead>
               <tbody>
-                {lista.map(({ a, pctAnual, tieneAntig, pctAntig }) => (
+                {listaTabla.map(({ a, pctAnual, tieneAntig, pctAntig }) => (
                   <tr key={a.nombre} className="clickable" onClick={() => onSelect(a.nombre)}>
                     <td>
                       <span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
@@ -95,17 +106,13 @@ export function Metas({ data, onSelect }: { data: DashboardData; onSelect: (n: s
                         <span style={{ fontWeight: 600 }}>{a.nombre}</span>
                       </span>
                     </td>
-                    <td className="r num">{a.mesesAntiguedad} m</td>
-                    <td className="r num">{fMoney(META_ANUAL_ASESOR)}</td>
-                    <td className="r num">{fMoney(a.totales.comTotal)}</td>
+                    <td className="r num">{a.mesesAntiguedad} {a.mesesAntiguedad === 1 ? "mes" : "meses"}</td>
                     <td>
                       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                         <div style={{ flex: 1 }}><Progress pct={pctAnual} /></div>
                         <span className="num" style={{ fontSize: 12, fontWeight: 600, minWidth: 42, textAlign: "right" }}>{pctAnual.toFixed(0)}%</span>
                       </div>
                     </td>
-                    <td className="r num">{tieneAntig ? fMoney(a.metaAntiguedad!) : "—"}</td>
-                    <td className="r num">{fMoney(a.totales.comAsesor)}</td>
                     <td>
                       {tieneAntig
                         ? <SemaforoBadge pct={pctAntig!} />

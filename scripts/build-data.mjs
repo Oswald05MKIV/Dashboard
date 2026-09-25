@@ -143,6 +143,8 @@ const ASESORES_BAJA = [
   "Joel Martínez Rodríguez",
   "Lucía Calderón",
   "Susana Ávila Basalrúa",
+  "Luis Eduardo Duval de las Casas",
+  "Ivette Camacho",
 ];
 
 /** true  = sus operaciones ya cerradas siguen sumando a los totales de la oficina
