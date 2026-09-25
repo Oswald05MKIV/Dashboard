@@ -44,6 +44,10 @@ export interface Advisor {
   activo: boolean;
   fechaSir: string | null;
   mesesAntiguedad: number;
+  /** Años calendario desde el ingreso (criterio de la hoja "Antiguedad"). null = sin fecha. */
+  aniosAntiguedad?: number | null;
+  /** Meses reales desde el ingreso, sin descontar capacitación. */
+  mesesDesdeIngreso?: number | null;
   metaAntiguedad: number | null;
   tarifaMesActual: number;
   metaAnio: number;

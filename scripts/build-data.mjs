@@ -146,6 +146,10 @@ const ASESORES_BAJA = [
   "Luis Eduardo Duval de las Casas",
   "Ivette Camacho",
   "Susana Cruz",
+  "Lizbeth Pérez",
+  "Consuelo Ramírez",
+  "Consuelo Becerril",
+  "Oswaldo Sánchez",
 ];
 
 /** true  = sus operaciones ya cerradas siguen sumando a los totales de la oficina
@@ -337,18 +341,46 @@ const fechaSirPorAsesor = new Map(); // strip(nombre canónico) -> {y, m}
 if (MEMBRESIAS_PATH) {
   validation.archivos.membresias = MEMBRESIAS_PATH.split("/").pop();
   const wbMem = XLSX.read(readFileSync(MEMBRESIAS_PATH), { cellDates: true });
-  const wsMem = wbMem.Sheets["Registro de pagos 2026"] ?? wbMem.Sheets[wbMem.SheetNames[0]];
-  const memRows = XLSX.utils.sheet_to_json(wsMem, { header: 1, range: 5, blankrows: false, defval: null });
+  // Fuente de la fecha de ingreso, en orden de prioridad:
+  //  1) Hoja "Antiguedad" (columnas NOMBRE | Ingreso Terra | Antiguedad): es la
+  //     que la oficina mantiene revisada.
+  //  2) Hoja de registro de membresías del año (columna D "Fecha Sir"), solo
+  //     para quien no aparezca en la hoja de antigüedad.
+  // Los nombres de las hojas se buscan sin importar mayúsculas ni sufijos
+  // ("REGISTRO MEMBRESIAS 2026 RO", "Registro de pagos 2026", etc.).
+  const hojaPor = (fn) => wbMem.SheetNames.find((n) => fn(strip(n)));
+  const hojaAntig = hojaPor((n) => n.startsWith("antiguedad"));
+  const hojaRegistro =
+    hojaPor((n) => n.includes("membresias") && n.includes(String(YEAR))) ??
+    hojaPor((n) => n.includes("registro") && n.includes(String(YEAR)));
   const memList = [];
-  for (const r of memRows) {
-    const nombre = r[1];
-    const fSir = parseFecha(r[3]); // columna D "Fecha Sir"
-    if (!nombre || !fSir) continue;
-    memList.push({ tokens: strip(nombre).split(" ").filter((t) => t.length > 1), fSir, nombre: String(nombre).trim() });
+  const yaEsta = new Set();
+  const agregar = (nombre, fecha) => {
+    const fSir = parseFecha(fecha);
+    if (!nombre || !fSir) return;
+    const key = strip(nombre);
+    if (yaEsta.has(key)) return;
+    yaEsta.add(key);
+    memList.push({ tokens: key.split(" ").filter((t) => t.length > 1), fSir, nombre: String(nombre).trim() });
+  };
+  if (hojaAntig) {
+    const filas = XLSX.utils.sheet_to_json(wbMem.Sheets[hojaAntig], { header: 1, blankrows: false, defval: null });
+    const ini = filas.findIndex((r) => strip(r[0]) === "nombre");
+    filas.slice(ini + 1).forEach((r) => agregar(r[0], r[1]));
+    validation.archivos.membresiasHoja = hojaAntig;
+  }
+  if (hojaRegistro) {
+    const filas = XLSX.utils.sheet_to_json(wbMem.Sheets[hojaRegistro], { header: 1, blankrows: false, defval: null });
+    const ini = filas.findIndex((r) => strip(r[1]) === "nombre");
+    filas.slice(ini + 1).forEach((r) => agregar(r[1], r[3]));
+  }
+  if (!memList.length) {
+    validation.advertencias.push(`El archivo de membresías no trae hoja "Antiguedad" ni registro ${YEAR} con fechas — antigüedad no calculada`);
   }
   // Asignar la Fecha Sir a cada asesor del roster por coincidencia de tokens
   // (subconjunto: todos los tokens del nombre de membresía están en el nombre canónico).
   const asignar = (canon) => {
+    if (esBaja(canon)) return; // las bajas no necesitan fecha de ingreso
     const ctoks = strip(canon).split(" ").filter((t) => t.length > 1);
     let mejor = null, mejorScore = 0;
     for (const m of memList) {
@@ -434,6 +466,11 @@ const advisors = [...advisorNames].sort((a, b) => strip(a).localeCompare(strip(b
     metaAntiguedad = metaAcumulada(mesesAntiguedad);
     tarifaMesActual = mesesAntiguedad > 0 ? tarifaMes(mesesAntiguedad) : 0;
   }
+  // Grupo de antigüedad con el mismo criterio de la hoja "Antiguedad":
+  // años calendario desde el ingreso (2024 → 2 años, 2025 → 1 año, 2026 → menos de 1 año).
+  const aniosAntiguedad = fSir ? Math.max(0, YEAR - fSir.y) : null;
+  // Meses reales desde el ingreso (sin descontar capacitación), para mostrar.
+  const mesesDesdeIngreso = fSir ? Math.max(0, (YEAR - fSir.y) * 12 + (currentMonth - fSir.m)) : null;
   const enMesActual = !!actividad[currentMonth]?.[name];
   const con2026 = cierres2026.length + apartados2026.length + pendientes.length + act.recorridos.reduce((a, b) => a + b, 0) + act.opciones.reduce((a, b) => a + b, 0) + act.opcionadas.reduce((a, b) => a + b, 0) > 0;
 
@@ -442,6 +479,8 @@ const advisors = [...advisorNames].sort((a, b) => strip(a).localeCompare(strip(b
     enRoster,
     activo: enMesActual || con2026,
     fechaSir: fSir ? `${fSir.y}-${String(fSir.m).padStart(2, "0")}` : null,
+    aniosAntiguedad,
+    mesesDesdeIngreso,
     mesesAntiguedad,
     metaAntiguedad,        // esperado acumulado en columna Y según antigüedad
     tarifaMesActual,       // aporte mensual del mes en curso

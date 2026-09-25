@@ -16,9 +16,91 @@ const VARS_CAPTURA = {
   "--tt-blue": "#003da5",
 } as CSSProperties;
 
+// Secciones por antigüedad, con el criterio de la hoja "Antiguedad" del archivo
+// de membresías (años calendario desde el ingreso).
+type ClaveGrupo = "2" | "1" | "0" | "sin";
+const GRUPOS: { clave: ClaveGrupo; titulo: string; archivo: string }[] = [
+  { clave: "2", titulo: "2 años o más", archivo: "2-anios" },
+  { clave: "1", titulo: "1 año", archivo: "1-anio" },
+  { clave: "0", titulo: "Menos de 1 año", archivo: "menos-1-anio" },
+  { clave: "sin", titulo: "Sin fecha de ingreso", archivo: "sin-fecha" },
+];
+const grupoAntig = (anios: number | null | undefined): ClaveGrupo =>
+  anios == null ? "sin" : anios >= 2 ? "2" : anios === 1 ? "1" : "0";
+
+type FilaMeta = {
+  a: DashboardData["advisors"][number];
+  pctAnual: number;
+  tieneAntig: boolean;
+  pctAntig: number | null;
+};
+
+function TablaGrupo({
+  titulo, archivo, corte, filas, onSelect, onAviso,
+}: {
+  titulo: string;
+  archivo: string;
+  corte: string;
+  filas: FilaMeta[];
+  onSelect: (n: string) => void;
+  onAviso: (m: string) => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  return (
+    <div className="section" ref={ref} style={VARS_CAPTURA}>
+      <Card title={`Avance individual · Meta Anual · ${titulo}`} icon={<Users size={14} />}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 12 }}>
+          <span className="kpi-sub">
+            {corte} · {filas.length} {filas.length === 1 ? "asesor" : "asesores"} · ordenado por color del cohorte, de mejor a peor
+          </span>
+          <BotonCaptura destino={ref} archivo={archivo} onAviso={onAviso} />
+        </div>
+        <div className="table-wrap">
+          <table className="data">
+            <thead>
+              <tr>
+                <th>Asesor</th>
+                <th className="r">Antigüedad</th>
+                <th style={{ width: "40%" }}>Avance anual ({fMoney(META_ANUAL_ASESOR)})</th>
+                <th>Cohorte</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filas.map(({ a, pctAnual, tieneAntig, pctAntig }) => {
+                const meses = a.mesesDesdeIngreso ?? a.mesesAntiguedad;
+                return (
+                  <tr key={a.nombre} className="clickable" onClick={() => onSelect(a.nombre)}>
+                    <td>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
+                        <Avatar nombre={a.nombre} />
+                        <span style={{ fontWeight: 600 }}>{a.nombre}</span>
+                      </span>
+                    </td>
+                    <td className="r num">{a.fechaSir ? `${meses} ${meses === 1 ? "mes" : "meses"}` : "—"}</td>
+                    <td>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <div style={{ flex: 1 }}><Progress pct={pctAnual} /></div>
+                        <span className="num" style={{ fontSize: 12, fontWeight: 600, minWidth: 42, textAlign: "right" }}>{pctAnual.toFixed(0)}%</span>
+                      </div>
+                    </td>
+                    <td>
+                      {tieneAntig
+                        ? <SemaforoBadge pct={pctAntig!} />
+                        : <span className="badge neutral">{a.fechaSir ? "En capacitación" : "Sin fecha"}</span>}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
 export function Metas({ data, onSelect }: { data: DashboardData; onSelect: (n: string) => void }) {
   const c = data.cohorte;
-  const refTabla = useRef<HTMLDivElement>(null);
   const { aviso, mostrar } = useAviso();
   const mesCorte = MESES_LARGOS[data.currentMonth - 1];
 
@@ -99,53 +181,22 @@ export function Metas({ data, onSelect }: { data: DashboardData; onSelect: (n: s
         </Card>
       </div>
 
-      {/* ---- Tabla individual: meta anual + % del cohorte ---- */}
-      <div className="section" ref={refTabla} style={VARS_CAPTURA}>
-        <Card title="Avance individual · Meta Anual" icon={<Users size={14} />}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 12 }}>
-            <span className="kpi-sub">
-              Corte {mesCorte.toLowerCase()} {data.year} · ordenado por color del cohorte, de mejor a peor
-            </span>
-            <BotonCaptura destino={refTabla} archivo={`metas-anual-${mesCorte.toLowerCase()}-${data.year}`} onAviso={mostrar} />
-          </div>
-          <div className="table-wrap">
-            <table className="data">
-              <thead>
-                <tr>
-                  <th>Asesor</th>
-                  <th className="r">Antigüedad</th>
-                  <th style={{ width: "40%" }}>Avance anual ({fMoney(META_ANUAL_ASESOR)})</th>
-                  <th>Cohorte</th>
-                </tr>
-              </thead>
-              <tbody>
-                {listaTabla.map(({ a, pctAnual, tieneAntig, pctAntig }) => (
-                  <tr key={a.nombre} className="clickable" onClick={() => onSelect(a.nombre)}>
-                    <td>
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
-                        <Avatar nombre={a.nombre} />
-                        <span style={{ fontWeight: 600 }}>{a.nombre}</span>
-                      </span>
-                    </td>
-                    <td className="r num">{a.mesesAntiguedad} {a.mesesAntiguedad === 1 ? "mes" : "meses"}</td>
-                    <td>
-                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <div style={{ flex: 1 }}><Progress pct={pctAnual} /></div>
-                        <span className="num" style={{ fontSize: 12, fontWeight: 600, minWidth: 42, textAlign: "right" }}>{pctAnual.toFixed(0)}%</span>
-                      </div>
-                    </td>
-                    <td>
-                      {tieneAntig
-                        ? <SemaforoBadge pct={pctAntig!} />
-                        : <span className="badge neutral">{a.fechaSir ? "En capacitación" : "Sin fecha"}</span>}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-      </div>
+      {/* ---- Tablas individuales por antigüedad: meta anual + % del cohorte ---- */}
+      {GRUPOS.map((g) => {
+        const filas = listaTabla.filter((x) => grupoAntig(x.a.aniosAntiguedad) === g.clave);
+        if (!filas.length) return null;
+        return (
+          <TablaGrupo
+            key={g.clave}
+            titulo={g.titulo}
+            archivo={`metas-anual-${g.archivo}-${mesCorte.toLowerCase()}-${data.year}`}
+            corte={`Corte ${mesCorte.toLowerCase()} ${data.year}`}
+            filas={filas}
+            onSelect={onSelect}
+            onAviso={mostrar}
+          />
+        );
+      })}
       {aviso && <div className="tt-toast" style={VARS_CAPTURA}>{aviso}</div>}
     </>
   );
