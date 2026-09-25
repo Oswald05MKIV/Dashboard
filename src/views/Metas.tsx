@@ -18,14 +18,14 @@ const VARS_CAPTURA = {
 
 // Secciones por antigüedad, con el criterio de la hoja "Antiguedad" del archivo
 // de membresías (años calendario desde el ingreso). Los que llevan menos de
-// 3 meses desde su ingreso van aparte, en "Prueba".
+// 3 meses desde su ingreso van aparte, en "En capacitación".
 type ClaveGrupo = "2" | "1" | "0" | "prueba" | "sin";
 const MESES_PRUEBA = 3;
 const GRUPOS: { clave: ClaveGrupo; titulo: string }[] = [
   { clave: "2", titulo: "2 años" },
   { clave: "1", titulo: "1 año" },
   { clave: "0", titulo: "Menos de 1 año" },
-  { clave: "prueba", titulo: "Prueba" },
+  { clave: "prueba", titulo: "En capacitación" },
   { clave: "sin", titulo: "Sin fecha de ingreso" },
 ];
 
