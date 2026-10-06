@@ -68,6 +68,8 @@ const OPCIONES_PATH = findFile("opciones");
 const APARTADO_PATH = findFile("apartado");
 let MEMBRESIAS_PATH = null;
 try { MEMBRESIAS_PATH = findFile("membres"); } catch { /* opcional */ }
+let CAPACITACION_PATH = null;
+try { CAPACITACION_PATH = findFile("capacitacion"); } catch { /* opcional */ }
 
 const validation = { generadoEl: new Date().toISOString(), archivos: { opciones: OPCIONES_PATH.split("/").pop(), apartado: APARTADO_PATH.split("/").pop(), membresias: null }, duplicadosEliminados: [], fechasCorregidas: [], nombresNormalizados: [], advertencias: [], asesoresFueraDeRoster: [] };
 
@@ -253,7 +255,7 @@ rawOps.forEach((r, i) => {
     comAsesor: num(r[COL.comAsesor]),
     estatus, pagado, cierreDirecto,
     apartadoY: fApartado?.y ?? null, apartadoM: fApartado?.m ?? null,
-    cierreY: fCierre?.y ?? null, cierreM: fCierre?.m ?? null,
+    cierreY: fCierre?.y ?? null, cierreM: fCierre?.m ?? null, cierreD: fCierre?.d ?? null,
   });
 });
 
@@ -308,6 +310,9 @@ function asesor2Interno(raw) {
 }
 
 const claveOperacion = (o) => [o.apartadoY, o.apartadoM, strip(o.propiedad).slice(0, 40), o.montoOperacion].join("|");
+// Clave fija de la operación: los créditos de ASESOR 2 la heredan (se crean con
+// ...o), así la regla de comisión total completa reconoce la misma operación.
+ops.forEach((o) => { o.claveOp = claveOperacion(o); });
 const yaTieneFila = new Set(ops.map((o) => `${claveOperacion(o)}::${strip(o.asesor)}`));
 const creditos = [];
 
@@ -439,12 +444,192 @@ if (MEMBRESIAS_PATH) {
 }
 
 /* ------------------------------------------------------------------ */
+/* 2.c) CAPACITACION — asistencia y participación de los escuderos      */
+/*                                                                      */
+/* Archivo opcional (se detecta por nombre, como los demás). Hojas:     */
+/*   ASESORES:      Asesor | En capacitación | Inicio de capacitación | Notas */
+/*   SESIONES:      ID Sesión | Fecha | Tema | Instructor | Duración (hrs) | Obligatoria */
+/*   ASISTENCIA:    Fecha | ID Sesión | Asesor | Asistió | Notas       */
+/*   PARTICIPACION: Fecha | ID Sesión | Asesor | Tipo de participación | Calificación (1-5) | Notas */
+/* INSTRUCCIONES y RESUMEN se ignoran. Solo cuenta el año en curso y,   */
+/* si hay "Inicio de capacitación", desde esa fecha. Si el archivo no   */
+/* existe o está vacío el build sigue: se usa la estimación provisional */
+/* de abajo y la app redistribuye los pesos del índice.                 */
+/* ------------------------------------------------------------------ */
+
+/* Estimación provisional de la oficina mientras CAPACITACION.xlsx se llena.
+   Son los comentarios de quien da la capacitación traducidos a proporciones:
+   asistencia 0–1, calificación 1–5, frecuencia de participación 0–1 (null = sin dato).
+   En cuanto un asesor tenga filas en ASISTENCIA o PARTICIPACION, manda el Excel
+   y esto se ignora para él. Para quitar la estimación: vaciar la lista. */
+const CAPACITACION_PROVISIONAL = [
+  { nombre: "Erick Rosales Pallares", asistencia: 1, calificacion: 5, frecuencia: 1, nota: "Buen seguimiento, participa y es puntual" },
+  { nombre: "Lesley García", asistencia: 1, calificacion: 5, frecuencia: 1, nota: "Buen seguimiento, participa y es puntual" },
+  { nombre: "Noel Castro", asistencia: 1, calificacion: 5, frecuencia: 1, nota: "Buen seguimiento, participa y es puntual" },
+  { nombre: "Olivia Flores", asistencia: 1, calificacion: null, frecuencia: null, nota: "Ha venido a todas las capacitaciones" },
+  { nombre: "Julieta Mar Rodríguez", asistencia: 1, calificacion: null, frecuencia: null, nota: "No ha faltado a ninguna capacitación" },
+  { nombre: "Angel Gabriel Martinez", asistencia: 0.5, calificacion: 2, frecuencia: 0.25, nota: "Poca actividad en las sesiones" },
+  { nombre: "Martha Ochoa", asistencia: 0.75, calificacion: 3, frecuencia: 0.5, nota: "A veces falta; ritmo algo bajo" },
+];
+
+const capRegistros = new Map(); // strip(nombre canónico) -> acumulado del Excel
+const ordinalFecha = (f) => f.y * 10000 + f.m * 100 + (f.d ?? 1);
+const isoFecha = (f) => `${f.y}-${String(f.m).padStart(2, "0")}-${String(f.d ?? 1).padStart(2, "0")}`;
+
+/** Lee una hoja por nombre: busca la primera fila que trae todos los encabezados
+ *  pedidos (puede haber títulos arriba) y devuelve las filas no vacías como objetos. */
+function leerHojaCap(wb, nombreHoja, columnas) {
+  const hoja = wb.SheetNames.find((n) => strip(n) === strip(nombreHoja));
+  if (!hoja) return [];
+  const filas = XLSX.utils.sheet_to_json(wb.Sheets[hoja], { header: 1, blankrows: false, defval: null });
+  const ini = filas.findIndex((r) => columnas.every((c) => r.some((v) => strip(v) === strip(c))));
+  if (ini < 0) {
+    if (filas.length) validation.advertencias.push(`CAPACITACION: la hoja "${hoja}" no trae los encabezados ${columnas.join(" | ")}`);
+    return [];
+  }
+  const idx = columnas.map((c) => filas[ini].findIndex((v) => strip(v) === strip(c)));
+  return filas
+    .slice(ini + 1)
+    .filter((r) => r.some((v) => v != null && String(v).trim() !== ""))
+    .map((r) => Object.fromEntries(columnas.map((c, i) => [c, r[idx[i]]])));
+}
+
+if (CAPACITACION_PATH) {
+  validation.archivos.capacitacion = CAPACITACION_PATH.split("/").pop();
+  const wbCap = XLSX.read(readFileSync(CAPACITACION_PATH), { cellDates: true });
+  const canonCap = (raw) => {
+    const c = resolveAdvisor(raw);
+    if (!c && raw) validation.advertencias.push(`CAPACITACION: "${String(raw).trim()}" no está en el roster de OPCIONES — se registra con ese nombre`);
+    return c ?? String(raw ?? "").replace(/\s+/g, " ").trim();
+  };
+  const reg = (canon) => {
+    const k = strip(canon);
+    if (!capRegistros.has(k)) capRegistros.set(k, { enCapacitacion: "auto", inicio: null, notas: null, sesiones: 0, asistio: 0, retardo: 0, justificada: 0, falto: 0, participaciones: 0, sumaCalif: 0, numCalif: 0 });
+    return capRegistros.get(k);
+  };
+
+  for (const r of leerHojaCap(wbCap, "ASESORES", ["Asesor", "En capacitación", "Inicio de capacitación", "Notas"])) {
+    if (!r["Asesor"]) continue;
+    const x = reg(canonCap(r["Asesor"]));
+    const v = strip(r["En capacitación"]);
+    x.enCapacitacion = v === "si" ? "si" : v === "no" ? "no" : "auto";
+    x.inicio = parseFecha(r["Inicio de capacitación"]);
+    x.notas = r["Notas"] ? String(r["Notas"]).trim() : null;
+  }
+  const fechaSesion = new Map();
+  for (const r of leerHojaCap(wbCap, "SESIONES", ["ID Sesión", "Fecha"])) {
+    const f = parseFecha(r["Fecha"]);
+    if (r["ID Sesión"] != null && f) fechaSesion.set(strip(r["ID Sesión"]), f);
+  }
+  /** La fila cuenta si cae en el año en curso y después del inicio de capacitación. */
+  const cuenta = (x, r) => {
+    const f = parseFecha(r["Fecha"]) ?? fechaSesion.get(strip(r["ID Sesión"])) ?? null;
+    if (!f || f.y !== YEAR) return false;
+    return !x.inicio || ordinalFecha(f) >= ordinalFecha(x.inicio);
+  };
+  for (const r of leerHojaCap(wbCap, "ASISTENCIA", ["Fecha", "ID Sesión", "Asesor", "Asistió"])) {
+    if (!r["Asesor"]) continue;
+    const x = reg(canonCap(r["Asesor"]));
+    if (!cuenta(x, r)) continue;
+    const v = strip(r["Asistió"]);
+    if (v === "si") x.asistio++;
+    else if (v === "retardo") x.retardo++;
+    else if (v.startsWith("justificad")) x.justificada++;
+    else if (v === "no") x.falto++;
+    else { validation.advertencias.push(`CAPACITACION: valor de "Asistió" no reconocido "${r["Asistió"]}" (${r["Asesor"]})`); continue; }
+    x.sesiones++;
+  }
+  for (const r of leerHojaCap(wbCap, "PARTICIPACION", ["Fecha", "ID Sesión", "Asesor", "Calificación (1-5)"])) {
+    if (!r["Asesor"]) continue;
+    const x = reg(canonCap(r["Asesor"]));
+    if (!cuenta(x, r)) continue;
+    x.participaciones++;
+    const cal = num(r["Calificación (1-5)"]);
+    if (cal >= 1 && cal <= 5) { x.sumaCalif += cal; x.numCalif++; }
+  }
+  if (![...capRegistros.values()].some((x) => x.sesiones || x.participaciones)) {
+    validation.advertencias.push("CAPACITACION: el archivo todavía no trae asistencia ni participación — se usa la estimación provisional");
+  }
+} else {
+  validation.advertencias.push("No se encontró CAPACITACION.xlsx en /data — el índice de los escuderos usa opcionadas y la estimación provisional");
+}
+
+/** Resumen de capacitación de un asesor (Excel primero, estimación provisional después). */
+function capacitacionDe(nombre) {
+  const x = capRegistros.get(strip(nombre)) ?? null;
+  const prov = CAPACITACION_PROVISIONAL.find((p) => strip(p.nombre) === strip(nombre)) ?? null;
+  const conExcel = !!x && (x.sesiones > 0 || x.participaciones > 0);
+  if (!x && !prov) return null;
+  const base = {
+    enCapacitacion: x?.enCapacitacion ?? "auto",
+    inicio: x?.inicio ? isoFecha(x.inicio) : null,
+    notas: x?.notas ?? null,
+  };
+  if (conExcel) {
+    const efectivas = x.sesiones - x.justificada;
+    const asistidas = x.asistio + x.retardo;
+    return {
+      ...base,
+      fuente: "excel",
+      sesiones: x.sesiones, asistio: x.asistio, retardo: x.retardo, justificada: x.justificada, falto: x.falto,
+      participaciones: x.participaciones,
+      asistencia: efectivas > 0 ? (x.asistio + 0.5 * x.retardo) / efectivas : null,
+      calificacion: x.numCalif ? x.sumaCalif / x.numCalif : null,
+      frecuencia: asistidas > 0 ? Math.min(1, x.participaciones / asistidas) : null,
+    };
+  }
+  return {
+    ...base,
+    fuente: prov ? "provisional" : "sin-datos",
+    notas: base.notas ?? prov?.nota ?? null,
+    sesiones: null, asistio: null, retardo: null, justificada: null, falto: null, participaciones: null,
+    asistencia: prov?.asistencia ?? null,
+    calificacion: prov?.calificacion ?? null,
+    frecuencia: prov?.frecuencia ?? null,
+  };
+}
+
+/* ------------------------------------------------------------------ */
 /* 3) Detección automática de mes actual / anterior                     */
 /* ------------------------------------------------------------------ */
 const mesesConDatos = new Set(monthSheets.map((s) => s.month));
 ops.forEach((o) => { if (o.cierreY === YEAR) mesesConDatos.add(o.cierreM); if (o.apartadoY === YEAR) mesesConDatos.add(o.apartadoM); });
 const currentMonth = Math.max(...mesesConDatos);
 const previousMonth = currentMonth > 1 ? currentMonth - 1 : null;
+
+/* ------------------------------------------------------------------ */
+/* 3.b) Comisión total de la operación — metas 500K y 1M                */
+/* ------------------------------------------------------------------ */
+/**
+ * REGLA (aislada a propósito para poder revisarla sola):
+ * A cada asesor de Terra se le acredita la COMISION TOTAL COMPLETA (columna U)
+ * de cada operación CERRADA en el año en la que participó, ya sea como ASESOR 1
+ * o como ASESOR 2 interno (los créditos de 2.a). Incluye las operaciones
+ * compartidas, sean con otro asesor de Terra o con un externo (otra oficina
+ * RE/MAX u otra inmobiliaria). Si dos asesores de Terra comparten, AMBOS
+ * reciben el total completo.
+ * Lo único que se evita es contar dos veces la misma operación para el mismo
+ * asesor (filas espejo): se compara por la clave de operación (fecha de
+ * apartado + propiedad + monto), que los créditos heredan de su fila original.
+ * Si una fila no trae COMISION TOTAL se usa X + Y para no perder la operación.
+ * Devuelve la suma por mes de cierre (índice 0 = enero).
+ */
+function comisionOperacionCompleta(opsDelAsesor) {
+  const porMes = emptyMonths();
+  const vistas = new Set();
+  for (const o of opsDelAsesor) {
+    if (o.estatus !== "CERRADA" || o.cierreY !== YEAR) continue;
+    if (vistas.has(o.claveOp)) continue;
+    vistas.add(o.claveOp);
+    let total = o.comTotal;
+    if (!(total > 0)) {
+      total = o.esCredito2 ? 0 : o.comOficina + o.comAsesor;
+      if (total > 0) validation.advertencias.push(`Fila ${o.fila} (${o.asesor}): sin COMISION TOTAL — para la meta 500K/1M se usó X + Y`);
+    }
+    porMes[o.cierreM - 1] += total;
+  }
+  return porMes;
+}
 
 /* ------------------------------------------------------------------ */
 /* 4) Agregación por asesor                                            */
@@ -489,6 +674,7 @@ const advisors = [...advisorNames].sort((a, b) => strip(a).localeCompare(strip(b
 
   const comOficina = comOficinaMes.reduce((a, b) => a + b, 0);
   const comAsesor = comAsesorMes.reduce((a, b) => a + b, 0);
+  const comOperacionMes = comisionOperacionCompleta(myOps);
   const enRoster = rosterSet.has(strip(name)) || Object.values(ALIAS).some((v) => strip(v) === strip(name));
 
   // Antigüedad → meta escalonada esperada (aporte al cohorte, se mide contra columna Y)
@@ -523,6 +709,8 @@ const advisors = [...advisorNames].sort((a, b) => strip(a).localeCompare(strip(b
     metaAnio: META_ANIO,   // meta individual $360,000 (X+Y), año calendario
     actividad: act,
     cierresMes, apartadosMes, comOficinaMes, comAsesorMes, cierresPropiosMes,
+    comOperacionMes,       // comisión total completa de la operación (metas 500K / 1M)
+    capacitacion: capacitacionDe(name),
     volRentaMes, volVentaMes, opsRentaMes, opsVentaMes,
     totales: {
       cierresPropios: cierres2026.filter((o) => !o.esCredito2).length,
@@ -539,6 +727,7 @@ const advisors = [...advisorNames].sort((a, b) => strip(a).localeCompare(strip(b
       pendientes: pendientes.length,
       porCobrar: porCobrar.length,
       comOficina, comAsesor, comTotal: comOficina + comAsesor,
+      comOperacion: comOperacionMes.reduce((a, b) => a + b, 0),
     },
     operacionesPendientes: pendientes.map((o) => ({ propiedad: o.propiedad, tipo: o.tipo, monto: o.montoOperacion, comEsperada: o.comOficina + o.comAsesor, apartadoM: o.apartadoM, apartadoY: o.apartadoY })),
     cierresDetalle: cierres2026.map((o) => ({ propiedad: o.propiedad, tipo: o.tipo, monto: o.montoOperacion, comOficina: o.comOficina, comAsesor: o.comAsesor, mes: o.cierreM, pagado: o.pagado, apartadoM: o.apartadoM, apartadoY: o.apartadoY })),
@@ -721,8 +910,14 @@ const teams = {
 };
 teams.sinEquipo.forEach((n) => validation.advertencias.push(`Teams: "${n}" está activo pero no pertenece a ningún equipo`));
 
+// Fecha de corte: la última FECHA OPERACION del año en el archivo de cierres.
+const fechasCierre = ops.filter((o) => o.estatus === "CERRADA" && o.cierreY === YEAR && o.cierreD).map((o) => ({ y: o.cierreY, m: o.cierreM, d: o.cierreD }));
+const fechaCorte = fechasCierre.length ? isoFecha(fechasCierre.reduce((a, b) => (ordinalFecha(b) > ordinalFecha(a) ? b : a))) : null;
+
 const dashboard = {
   year: YEAR,
+  fechaCorte,
+  capacitacionArchivo: validation.archivos.capacitacion ?? null,
   teams,
   cohorte,
   leadsCuatrimestre,

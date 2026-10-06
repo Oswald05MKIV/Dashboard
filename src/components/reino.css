@@ -1,0 +1,230 @@
+/* Temática medieval de Metas: "El Reino", "Torneo de justas" y "Escuderos".
+   Todo va con prefijo .rn- para no chocar con el resto del dashboard.
+   Tipografías: Cinzel (títulos) y EB Garamond (texto), con respaldo serif. */
+
+.rn-card {
+  --rn-tinta: #3b2a1a;
+  --rn-sepia: #5a4632;
+  --rn-muted: #7a6650;
+  --rn-perg: #f6edd8;
+  --rn-perg-2: #efe1c0;
+  --rn-linea: #dcc9a2;
+  --rn-oro: #b8892b;
+  --rn-oro-claro: #e3c06f;
+  --rn-vino: #7a1f2b;
+  --rn-titulo: "Cinzel", "Trajan Pro", Georgia, "Times New Roman", serif;
+  --rn-texto: "EB Garamond", Garamond, Georgia, "Times New Roman", serif;
+  /* variables que usan el botón de captura y el aviso (.tt-cap / .tt-toast) */
+  --tt-ink: #3b2a1a;
+  --tt-line: #dcc9a2;
+  --tt-surface: #fffaf0;
+  --tt-canvas: #f3e7cc;
+  --tt-blue: #7a1f2b;
+
+  position: relative;
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(255, 252, 243, 0.9), rgba(246, 237, 216, 0) 70%),
+    linear-gradient(180deg, var(--rn-perg), var(--rn-perg-2));
+  border: 1px solid var(--rn-linea);
+  border-radius: var(--radius, 12px);
+  box-shadow: inset 0 0 0 4px rgba(255, 250, 240, 0.6), inset 0 0 0 5px var(--rn-linea), var(--shadow);
+  padding: 20px 22px 18px;
+  color: var(--rn-tinta);
+  font-family: var(--rn-texto);
+  font-size: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+.rn-card__top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px 18px; flex-wrap: wrap; }
+.rn-card__title {
+  font-family: var(--rn-titulo);
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--rn-vino);
+  margin: 0;
+}
+.rn-card__note { margin: 4px 0 0; color: var(--rn-muted); font-size: 14.5px; line-height: 1.4; max-width: 78ch; }
+.rn-card__foot { margin: 0; color: var(--rn-muted); font-size: 13.5px; line-height: 1.45; }
+.rn-acciones { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.rn-card .tt-cap { font-family: var(--font-body); }
+
+/* switch Tabla | Torneo (reusa .seg) */
+.rn-switch { font-family: var(--font-body); }
+.seg.rn-switch button.on { background: var(--rn-vino); color: #fff; }
+
+/* contexto de tiempo */
+.rn-contexto { display: flex; flex-wrap: wrap; gap: 8px; }
+.rn-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 13.5px; padding: 3px 12px; border-radius: 999px;
+  border: 1px solid var(--rn-linea); background: rgba(255, 250, 240, 0.8); color: var(--rn-sepia);
+}
+.rn-chip--fuerte { background: var(--rn-vino); border-color: var(--rn-vino); color: #fff; font-family: var(--rn-titulo); font-weight: 600; letter-spacing: 0.04em; }
+.rn-medicion { margin: 0; font-size: 14.5px; line-height: 1.45; padding: 10px 14px; border-left: 3px solid var(--rn-oro); background: rgba(255, 250, 240, 0.7); border-radius: 0 8px 8px 0; }
+.rn-aviso { margin: 0; padding: 10px 14px; border-radius: 8px; background: #f8e3c4; border: 1px solid #e3b878; font-weight: 600; }
+.rn-vacio { margin: 4px 0 8px; color: var(--rn-muted); font-style: italic; }
+
+/* encabezados heráldicos */
+.rn-heraldo {
+  display: flex; align-items: center; gap: 12px;
+  padding: 8px 14px; margin-top: 4px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, rgba(90, 70, 50, 0.12), rgba(90, 70, 50, 0) 80%); /* sin color-mix: html2canvas no lo soporta */
+  border-left: 4px solid var(--rn-nivel, var(--rn-vino));
+}
+.rn-heraldo__eyebrow { margin: 0; font-size: 11.5px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--rn-muted); font-family: var(--font-body); }
+.rn-heraldo__titulo { margin: 1px 0 0; font-family: var(--rn-titulo); font-size: 17px; font-weight: 700; letter-spacing: 0.05em; color: var(--rn-tinta); }
+.rn-heraldo__nota { margin: 2px 0 0; font-size: 13.5px; color: var(--rn-muted); }
+.rn-heraldo--compacto { padding: 6px 12px; }
+.rn-heraldo--compacto .rn-heraldo__titulo { font-size: 15px; }
+
+/* tablas (estilo del dashboard, sobre papel) */
+.rn-tabla-nivel { display: flex; flex-direction: column; gap: 8px; }
+.rn-card .table-wrap { background: #fffdf8; border: 1px solid var(--rn-linea); border-radius: 8px; }
+.rn-tabla { font-family: var(--font-body); }
+.rn-tabla th { background: #fbf4e3; color: var(--rn-muted); }
+.rn-tabla th.r, .rn-tabla td.r { text-align: right; }
+.rn-tabla td { vertical-align: middle; }
+.rn-quien { display: inline-flex; align-items: center; gap: 10px; }
+.rn-quien > span { display: flex; flex-direction: column; gap: 2px; }
+.rn-quien__nombre { font-weight: 600; }
+.rn-msg { font-family: var(--rn-texto); font-size: 14px; color: var(--rn-sepia); min-width: 220px; }
+.rn-sin { color: var(--rn-muted); font-style: italic; font-family: var(--rn-texto); }
+.rn-casi {
+  display: inline-block; width: fit-content;
+  font-size: 11.5px; font-weight: 700; font-family: var(--font-body);
+  color: #7a4b00; background: #fbe7b5; border: 1px solid #e8c56b;
+  border-radius: 999px; padding: 1px 9px;
+}
+.rn-indice { font-family: var(--rn-titulo); font-size: 22px; font-weight: 700; color: var(--rn-vino); line-height: 1; }
+.rn-indice--chico { font-size: 17px; }
+
+/* escudos */
+.rn-escudo { flex: none; position: relative; display: inline-block; line-height: 1; }
+.rn-escudo > svg { display: block; }
+.rn-escudo__txt {
+  position: absolute; left: 0; right: 0; top: 30%; text-align: center;
+  font-family: "Cinzel", Georgia, "Times New Roman", serif; font-weight: 700; color: #fff; letter-spacing: 0.02em;
+}
+
+/* ---------- Torneo de justas ---------- */
+.rn-torneo { display: flex; flex-direction: column; gap: 14px; }
+.rn-torneo__nivel { display: flex; flex-direction: column; gap: 8px; }
+.rn-scroll { overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; max-width: 100%; }
+.rn-lizas { display: flex; flex-direction: column; gap: 4px; min-width: 820px; }
+.rn-fila {
+  display: grid; grid-template-columns: 230px minmax(480px, 1fr) 96px; align-items: center; gap: 12px;
+  width: 100%; text-align: left; font: inherit; color: inherit;
+  background: rgba(255, 250, 240, 0.55); border: 1px solid transparent; border-radius: 8px;
+  padding: 4px 10px; cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.rn-fila:hover { background: rgba(255, 250, 240, 0.95); border-color: var(--rn-linea); }
+.rn-fila:focus-visible { outline: 2px solid var(--rn-vino); outline-offset: 1px; }
+.rn-fila__quien { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.rn-fila__quien > span { display: flex; flex-direction: column; min-width: 0; }
+.rn-fila__nombre { font-weight: 600; font-size: 15px; line-height: 1.2; }
+.rn-fila__dato { font-size: 12.5px; color: var(--rn-muted); line-height: 1.3; }
+.rn-fila__msg { font-style: italic; }
+.rn-fila__pct { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.rn-fila__sub { font-size: 11.5px; color: var(--rn-muted); }
+.rn-liza { display: block; width: 100%; height: auto; overflow: visible; }
+.rn-caballero__cuerpo, .rn-escudero__cuerpo { transform-box: fill-box; transform-origin: 50% 100%; }
+@media (prefers-reduced-motion: no-preference) {
+  .rn-caballero__cuerpo { animation: rn-galope 0.9s ease-in-out infinite; }
+  .rn-escudero__cuerpo { animation: rn-paso 1.2s ease-in-out infinite; }
+  @keyframes rn-galope { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-1.6px) rotate(-1.2deg); } }
+  @keyframes rn-paso { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1.2px); } }
+}
+
+/* ---------- El Reino ---------- */
+.rn-leyenda { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+.rn-leyenda li {
+  display: flex; align-items: center; gap: 10px; padding: 6px 10px;
+  border-radius: 8px; border: 1px solid var(--rn-linea);
+  border-left: 4px solid var(--rn-nivel); background: rgba(255, 250, 240, 0.7);
+}
+.rn-leyenda li > span { display: flex; flex-direction: column; min-width: 0; }
+.rn-leyenda strong { font-family: var(--rn-titulo); font-size: 13.5px; letter-spacing: 0.03em; }
+.rn-leyenda em { font-style: normal; font-size: 13px; color: var(--rn-muted); }
+.rn-reino__marco { position: relative; }
+.rn-reino__svg { display: block; width: 100%; min-width: 900px; height: auto; border-radius: 8px; user-select: none; font-family: var(--rn-texto); }
+.rn-teams { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13.5px; color: var(--rn-sepia); }
+.rn-teams li { display: inline-flex; align-items: center; gap: 6px; }
+.rn-teams__chip { width: 12px; height: 12px; border-radius: 3px; display: inline-block; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15); }
+
+/* textos dentro del mapa */
+.rn-mapa__titulo { font-family: var(--rn-titulo); font-size: 17px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; fill: #f8ecd0; }
+.rn-mapa__subtitulo { font-family: var(--rn-texto); font-size: 10px; letter-spacing: 0.06em; fill: var(--rn-oro-claro); }
+.rn-mapa__territorio { font-family: var(--rn-titulo); font-size: 11px; font-weight: 700; letter-spacing: 0.04em; fill: var(--rn-tinta); }
+.rn-mapa__sub { font-family: var(--rn-texto); font-size: 9.5px; font-style: italic; fill: var(--rn-muted); }
+.rn-mapa__rosa { font-family: var(--rn-titulo); font-size: 11px; font-weight: 700; fill: var(--rn-sepia); }
+.rn-mapa__hoy { font-family: var(--rn-texto); font-size: 10px; font-style: italic; fill: #8a6414; paint-order: stroke; stroke: #f6edd8; stroke-width: 3px; }
+
+/* estandartes de los asesores */
+.rn-marcador { cursor: pointer; outline: none; }
+.rn-marcador .rn-estandarte { transition: transform 0.15s ease; }
+.rn-marcador:hover .rn-estandarte, .rn-marcador:focus-visible .rn-estandarte { transform: translateY(-3px); }
+.rn-marcador:focus-visible .rn-marcador__nombre { text-decoration: underline; }
+.rn-estandarte__ini { font-family: var(--rn-titulo, "Cinzel", Georgia, serif); font-size: 9px; font-weight: 700; fill: #fff; letter-spacing: 0.02em; }
+.rn-marcador__nombre {
+  font-family: var(--rn-texto); font-size: 10.5px; font-weight: 600; fill: var(--rn-tinta);
+  paint-order: stroke; stroke: #f6edd8; stroke-width: 3px; stroke-linejoin: round;
+}
+.rn-marcador--sel .rn-marcador__nombre { fill: var(--rn-vino); }
+
+/* estandartes ondeando */
+.rn-ondear { transform-box: fill-box; transform-origin: 0 0; }
+@media (prefers-reduced-motion: no-preference) {
+  .rn-ondear { animation: rn-ondear 3.4s ease-in-out infinite; animation-delay: var(--rn-delay, 0s); }
+  @keyframes rn-ondear {
+    0%, 100% { transform: skewY(0deg) scaleX(1); }
+    30% { transform: skewY(2.5deg) scaleX(0.97); }
+    65% { transform: skewY(-2deg) scaleX(1.02); }
+  }
+  .rn-llama { transform-box: fill-box; transform-origin: 50% 100%; animation: rn-llama 1.1s ease-in-out infinite alternate; }
+  @keyframes rn-llama { from { transform: scaleY(1); } to { transform: scaleY(1.15) skewX(4deg); } }
+  .rn-hoy path { animation: rn-hoy 2.4s ease-in-out infinite; }
+  @keyframes rn-hoy { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+}
+
+/* panel del asesor */
+.rn-panel {
+  position: absolute; top: 12px; right: 12px; width: 300px; max-height: calc(100% - 24px); overflow: auto;
+  background: #fffaf0; border: 1px solid var(--rn-linea); border-top: 4px solid var(--rn-team, var(--rn-vino));
+  border-radius: 10px; box-shadow: 0 12px 32px rgba(59, 42, 26, 0.22);
+  padding: 12px 14px; font-size: 14px; z-index: 2;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .rn-panel { animation: rn-in 0.18s ease-out; }
+  @keyframes rn-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+}
+.rn-panel__head { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: start; margin-bottom: 6px; }
+.rn-panel__team { margin: 0; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--rn-muted); font-family: var(--font-body); }
+.rn-panel__name { margin: 2px 0 0; font-family: var(--rn-titulo); font-size: 16px; font-weight: 700; letter-spacing: 0.02em; }
+.rn-panel__close { border: none; background: none; font-size: 22px; line-height: 1; cursor: pointer; color: var(--rn-muted); padding: 0 4px; border-radius: 6px; }
+.rn-panel__close:hover { background: var(--rn-perg-2); color: var(--rn-tinta); }
+.rn-panel__section { margin: 10px 0 4px; font-family: var(--rn-titulo); font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: var(--rn-vino); }
+.rn-panel__row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 4px 0; border-bottom: 1px solid #f0e4c9; }
+.rn-panel__row span { color: var(--rn-muted); }
+.rn-panel__row strong { font-weight: 600; white-space: nowrap; font-family: var(--font-body); font-size: 13px; }
+.rn-panel__msg { margin: 8px 0 0; font-style: italic; }
+.rn-panel__nota { margin: 6px 0 0; font-size: 12.5px; color: var(--rn-muted); }
+.rn-panel .rn-casi { margin-top: 8px; }
+.rn-panel__link { display: inline-block; margin-top: 10px; font-size: 13px; font-weight: 700; color: var(--rn-vino); text-decoration: none; font-family: var(--font-body); }
+.rn-panel__link:hover { text-decoration: underline; }
+@media (max-width: 560px) {
+  .rn-card { padding: 16px 14px; }
+  .rn-panel { position: fixed; top: auto; bottom: 10px; left: 10px; right: 10px; width: auto; max-height: 70vh; }
+}
+
+/* captura: la imagen sale completa aunque en pantalla haya scroll horizontal */
+/* (en pantallas angostas la tarjeta se ensancha solo durante la captura). */
+.tt-capturando .rn-scroll { overflow: visible; }
+.tt-capturando.rn-card, .tt-capturando .rn-card { min-width: 980px; }
+@media (max-width: 560px) { .tt-capturando .rn-panel { display: none; } }
+/* el grano fino no se comprime: sin él la imagen pesa una fracción */
+.tt-capturando .rn-grano { display: none; }

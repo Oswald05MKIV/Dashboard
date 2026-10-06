@@ -212,6 +212,42 @@ select.control {
 .empty { color: var(--text-3); font-size: 13px; padding: 14px 0; text-align: center; }
 .highlight-card { border-left: 3px solid var(--rx-red); }
 
+/* ---------- Resumen: bloques de KPIs ---------- */
+.kpi-legend {
+  display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: center;
+  font-size: 12px; color: var(--text-2);
+  padding: 10px 14px; background: var(--surface); border: 1px dashed var(--line); border-radius: var(--radius-sm);
+}
+.kpi-legend > span { display: inline-flex; align-items: center; gap: 8px; }
+.scope-tag {
+  display: inline-flex; align-items: center; font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--rx-blue); background: var(--info-bg); border-radius: 999px; padding: 2px 9px; white-space: nowrap;
+}
+.scope-tag.monthly { color: var(--ok); background: var(--ok-bg); }
+.kpi-row { display: grid; gap: 22px 14px; align-items: stretch; }
+.kpi-row-4-3 { grid-template-columns: minmax(0, 1fr); }
+/* Destacados ocupa 1 de las 4 columnas de la rejilla y el cohorte las otras 3. */
+.kpi-row-dest { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.kpi-row-dest > .kpi-group:last-child { grid-column: span 3; }
+.kpi-group { min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.kpi-group-head { display: flex; align-items: center; gap: 8px 10px; flex-wrap: wrap; min-height: 22px; }
+.kpi-group-head h2 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text); }
+.kpi-group-note { font-size: 11.5px; color: var(--text-3); margin-left: auto; }
+/* Rejilla única de 4 columnas: todas las tarjetas miden lo mismo en todos los bloques. */
+.kpi-group-grid { display: grid; gap: 14px; grid-template-columns: repeat(4, minmax(0, 1fr)); flex: 1; }
+.kpi-group-grid.stacked { grid-template-columns: minmax(0, 1fr); }
+.kpi-group-grid > .kpi { min-width: 0; }
+.cohorte-card { flex: 1; }
+@media (max-width: 1100px) {
+  .kpi-row-dest { grid-template-columns: minmax(0, 1fr); }
+  .kpi-row-dest > .kpi-group:last-child { grid-column: auto; }
+  .kpi-group-grid.stacked { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 700px) {
+  .kpi-group-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kpi-group-note { margin-left: 0; width: 100%; }
+}
+
 /* ---------- Responsive ---------- */
 .menu-toggle { display: none; }
 @media (max-width: 900px) {

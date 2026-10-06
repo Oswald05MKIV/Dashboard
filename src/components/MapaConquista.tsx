@@ -3,8 +3,8 @@ import type { CSSProperties } from 'react';
 import dashboardJson from '../generated/dashboard.json';
 import type { Advisor, DashboardData } from '../types';
 import type { ColorTeam, IntegranteTeam, Team } from '../lib/teams';
-import { META_ANUAL_ASESOR } from '../config';
 import { conversion, fMoney, fNum, fPct, rankOf, safeDiv } from '../lib/metrics';
+import { contextoMetas, enCapacitacion, indiceCapacitacion, metaIndividual } from '../lib/metasNiveles';
 import { buscarPorNombre } from '../lib/nombres';
 import { leadsCuatrimestre, leadsCuatrimestreDe } from '../lib/leadsCuatrimestre';
 import type { LeadsCuatrimestreFila } from '../lib/leadsCuatrimestre';
@@ -252,18 +252,48 @@ function Montana({ x, y, s = 1 }: { x: number; y: number; s?: number }) {
       <path d="M-22 12 L-8 -14 L-2 4 Z" fill="#b8a27a" />
       <path d="M12 -8 L26 12 L14 12 Z" fill="#b8a27a" />
       <path d="M-11 -8 L-8 -14 L-5 -8" fill="#f4efe3" stroke="none" />
+      {/* sombreado a plumilla */}
+      <path d="M-17 10 L-11 -2 M-13 11 L-8 0 M-9 11 L-5 3 M16 10 L19 6 M19 11 L21 8" strokeWidth="0.6" opacity="0.55" />
+    </g>
+  );
+}
+
+function Colinas({ x, y }: { x: number; y: number }) {
+  return (
+    <g transform={`translate(${x} ${y})`} fill="none" stroke={TINTA} strokeWidth="0.9" strokeLinecap="round" opacity="0.7">
+      <path d="M-24 6 Q-14 -6 -4 6" />
+      <path d="M-8 8 Q4 -8 16 8" />
+      <path d="M8 4 Q16 -4 26 4" />
+      <path d="M-16 4 v-2 M0 4 v-3 M14 3 v-2" strokeWidth="0.6" />
+    </g>
+  );
+}
+
+function Aldea({ x, y }: { x: number; y: number }) {
+  return (
+    <g transform={`translate(${x} ${y})`} stroke={TINTA} strokeWidth="0.8" strokeLinejoin="round">
+      <path d="M-12 6 V-1 L-7 -6 L-2 -1 V6 Z" fill="#eadfc4" />
+      <path d="M-13 0 L-7 -7 L-1 0" fill="none" stroke="#8a3b2c" strokeWidth="1.6" />
+      <path d="M2 6 V0 L8 -6 L14 0 V6 Z" fill="#e3d6b6" />
+      <path d="M1 1 L8 -7 L15 1" fill="none" stroke="#8a3b2c" strokeWidth="1.6" />
+      <path d="M-3 7 V-8 L-1 -12 L1 -8 V7" fill="#d8caa6" />
+      <path d="M-1 -12 V-16" />
     </g>
   );
 }
 
 function Bosque({ x, y }: { x: number; y: number }) {
-  const puntos = [[0, 0], [9, -4], [-8, -5], [4, 7], [-3, 8], [12, 5]];
+  const puntos = [[0, 0], [9, -4], [-8, -5], [4, 7], [-3, 8], [12, 5], [-13, 3]];
   return (
-    <g transform={`translate(${x} ${y})`} fill="#9aad86" stroke={TINTA} strokeWidth="0.8">
+    <g transform={`translate(${x} ${y})`} stroke={TINTA} strokeWidth="0.8">
       {puntos.map(([px, py], i) => (
         <g key={i}>
-          <circle cx={px} cy={py} r="4.2" />
           <path d={`M${px} ${py + 4} v3`} />
+          {i % 3 === 1 ? (
+            <path d={`M${px - 4.5} ${py + 4} L${px} ${py - 7} L${px + 4.5} ${py + 4} Z`} fill="#7f9467" />
+          ) : (
+            <circle cx={px} cy={py} r="4.2" fill={i % 2 ? '#8ea377' : '#a3b58c'} />
+          )}
         </g>
       ))}
     </g>
@@ -295,10 +325,14 @@ function Terreno() {
     <g>
       {/* ríos */}
       <g fill="none" strokeLinecap="round">
+        <path d="M60 520 C 200 470, 260 380, 420 350 S 560 250, 650 140 S 880 90, 960 60" stroke="#8fb3c2" strokeWidth="9" opacity="0.35" />
         <path d="M60 520 C 200 470, 260 380, 420 350 S 560 250, 650 140 S 880 90, 960 60" stroke="#8fb3c2" strokeWidth="5" opacity="0.55" />
         <path d="M60 520 C 200 470, 260 380, 420 350 S 560 250, 650 140 S 880 90, 960 60" stroke="#5f8ea4" strokeWidth="1.4" />
+        <path d="M60 520 C 200 470, 260 380, 420 350 S 560 250, 650 140 S 880 90, 960 60" stroke="#eef4f2" strokeWidth="0.8" strokeDasharray="5 16" opacity="0.8" />
+        <path d="M950 560 C 820 520, 760 440, 660 430 S 540 470, 470 560" stroke="#8fb3c2" strokeWidth="8" opacity="0.35" />
         <path d="M950 560 C 820 520, 760 440, 660 430 S 540 470, 470 560" stroke="#8fb3c2" strokeWidth="4" opacity="0.55" />
         <path d="M950 560 C 820 520, 760 440, 660 430 S 540 470, 470 560" stroke="#5f8ea4" strokeWidth="1.2" />
+        <path d="M950 560 C 820 520, 760 440, 660 430 S 540 470, 470 560" stroke="#eef4f2" strokeWidth="0.8" strokeDasharray="5 16" opacity="0.8" />
       </g>
       {/* caminos entre capitales */}
       <g fill="none" stroke={TINTA} strokeWidth="1.2" strokeDasharray="5 4" opacity="0.65">
@@ -327,6 +361,18 @@ function Terreno() {
       <Bosque x={330} y={430} />
       <Bosque x={900} y={140} />
       <Bosque x={110} y={330} />
+      <Bosque x={560} y={520} />
+      <Bosque x={420} y={110} />
+      {/* colinas y aldeas */}
+      <Colinas x={250} y={300} />
+      <Colinas x={760} y={330} />
+      <Colinas x={600} y={560} />
+      <Colinas x={380} y={540} />
+      <Colinas x={820} y={170} />
+      <Aldea x={360} y={300} />
+      <Aldea x={640} y={330} />
+      <Aldea x={500} y={170} />
+      <Aldea x={500} y={450} />
     </g>
   );
 }
@@ -338,17 +384,30 @@ function Marco() {
   return (
     <g>
       <g stroke={TINTA} strokeWidth="0.5" opacity="0.14">{grat}</g>
+      <rect width={ANCHO} height={ALTO} fill="url(#tt-vineta)" pointerEvents="none" />
       <rect x="8" y="8" width={ANCHO - 16} height={ALTO - 16} fill="none" stroke={TINTA} strokeWidth="2.2" />
-      <rect x="14" y="14" width={ANCHO - 28} height={ALTO - 28} fill="none" stroke={TINTA} strokeWidth="0.8" />
+      <rect x="14" y="14" width={ANCHO - 28} height={ALTO - 28} fill="none" stroke="#b8892b" strokeWidth="0.9" />
+      {/* esquinas ornamentales */}
+      {[[14, 14, 0], [ANCHO - 14, 14, 90], [ANCHO - 14, ALTO - 14, 180], [14, ALTO - 14, 270]].map(([cx, cy, r]) => (
+        <g key={`${cx}-${cy}`} transform={`translate(${cx} ${cy}) rotate(${r})`} stroke={TINTA} strokeWidth="1" fill="none">
+          <path d="M0 26 C 6 14, 14 6, 26 0" />
+          <path d="M4 20 C 12 18, 18 12, 20 4" strokeWidth="0.7" />
+          <circle cx="9" cy="9" r="3" fill="#b8892b" stroke="none" />
+        </g>
+      ))}
       {/* rosa de los vientos */}
       <g transform={`translate(${ANCHO - 78} 82)`} stroke={TINTA} strokeWidth="1" strokeLinejoin="round">
         <circle r="30" fill="none" opacity="0.6" />
-        <circle r="22" fill="none" strokeWidth="0.6" opacity="0.5" />
+        <circle r="22" fill="none" strokeWidth="0.6" opacity="0.5" strokeDasharray="1.5 2.5" />
+        {[22.5, 67.5, 112.5, 157.5, 202.5, 247.5, 292.5, 337.5].map((g) => (
+          <path key={g} transform={`rotate(${g})`} d="M0 -19 L2.4 -4 L0 0 L-2.4 -4 Z" fill="#efe5cc" strokeWidth="0.6" />
+        ))}
         <path d="M0 -30 L6 -6 L0 0 L-6 -6 Z" fill="#e6dcc3" />
         <path d="M0 30 L6 6 L0 0 L-6 6 Z" fill="#e6dcc3" />
         <path d="M30 0 L6 6 L0 0 L6 -6 Z" fill="#e6dcc3" />
         <path d="M-30 0 L-6 6 L0 0 L-6 -6 Z" fill="#e6dcc3" />
         <path d="M0 -30 L0 0 L-6 -6 Z M30 0 L0 0 L6 -6 Z M0 30 L0 0 L6 6 Z M-30 0 L0 0 L-6 6 Z" fill={TINTA} stroke="none" />
+        <circle r="3" fill="#b8892b" stroke="none" />
         <path d="M18 -18 L0 0 M-18 -18 L0 0 M18 18 L0 0 M-18 18 L0 0" strokeWidth="0.7" opacity="0.6" />
         <text y="-35" textAnchor="middle" className="tt-mapa__rosa">N</text>
       </g>
@@ -385,7 +444,11 @@ function PanelAsesor({ m, onCerrar }: { m: Miembro; onCerrar: () => void }) {
   const civ = CIVILIZACIONES[m.team.color];
   const a = m.advisor;
   const cuatri = leadsCuatrimestre();
-  const metaPct = a ? safeDiv(a.totales.comTotal, META_ANUAL_ASESOR) * 100 : 0;
+  // Meta anual de su nivel (360K / 500K / 1M); en capacitación, índice de formación.
+  const ctx = contextoMetas(data);
+  const escudero = a ? enCapacitacion(a) : false;
+  const meta = a && !escudero ? metaIndividual(a, ctx) : null;
+  const metaPct = meta ? meta.pctMeta : a ? indiceCapacitacion(a, data, ctx).indice : 0;
   const estilo = { ['--tt-team' as string]: c.base, ['--tt-team-soft' as string]: c.suave, ['--tt-team-line' as string]: c.linea, ['--tt-team-ink' as string]: c.texto } as CSSProperties;
   return (
     <aside className="tt-panel" style={estilo} role="dialog" aria-label={`Estadísticas de ${m.fila.nombre}`}>
@@ -431,7 +494,14 @@ function PanelAsesor({ m, onCerrar }: { m: Miembro; onCerrar: () => void }) {
           <Fila k="Comisión Oficina (X)" v={mxn(a.totales.comOficina)} />
           <Fila k="Comisión Asesor (Y)" v={mxn(a.totales.comAsesor)} />
           <Fila k="Comisión total (X + Y)" v={mxn(a.totales.comTotal)} />
-          <Fila k={`Meta anual · ${mxn(META_ANUAL_ASESOR)}`} v={fPct(metaPct)} />
+          {meta ? (
+            <>
+              <Fila k={`Meta anual · ${meta.nivel.etiqueta} (${mxn(meta.meta)})`} v={fPct(metaPct)} />
+              <Fila k={`% de ritmo (mes ${ctx.mes} de 12)`} v={`${meta.pctRitmo.toFixed(2)}%`} />
+            </>
+          ) : (
+            <Fila k="Escudero · índice de formación" v={`${Math.round(metaPct)} / 100`} />
+          )}
           <div className="tt-panel__bar"><span style={{ width: `${Math.min(metaPct, 100)}%` }} /></div>
           <a className="tt-panel__link" href={`#/asesores/${encodeURIComponent(a.nombre)}`}>Ver ficha completa →</a>
         </>
@@ -499,8 +569,27 @@ export default function MapaConquista({ teams, periodo, onAviso }: { teams: read
               <stop offset="0.7" stopColor="#ebdfc2" />
               <stop offset="1" stopColor="#d9c9a3" />
             </radialGradient>
+            <radialGradient id="tt-vineta" cx="50%" cy="50%" r="72%">
+              <stop offset="0.6" stopColor="#6b4a22" stopOpacity="0" />
+              <stop offset="1" stopColor="#6b4a22" stopOpacity="0.38" />
+            </radialGradient>
+            <filter id="tt-grano" x="0" y="0" width="100%" height="100%">
+              <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" seed="11" result="n" />
+              <feColorMatrix in="n" type="matrix" values="0 0 0 0 0.35  0 0 0 0 0.25  0 0 0 0 0.12  0 0 0 0.55 0" />
+            </filter>
+            <filter id="tt-manchas" x="0" y="0" width="100%" height="100%">
+              <feTurbulence type="fractalNoise" baseFrequency="0.007 0.01" numOctaves="2" seed="5" result="m" />
+              <feColorMatrix in="m" type="matrix" values="0 0 0 0 0.45  0 0 0 0 0.3  0 0 0 0 0.12  0 0 0 1.1 -0.45" />
+            </filter>
+            {teams.map((t) => (
+              <pattern key={t.color} id={`tt-trama-${t.color}`} width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(35)">
+                <path d="M0 0 V7" stroke={PALETA[t.color].base} strokeWidth="1" opacity="0.35" />
+              </pattern>
+            ))}
           </defs>
           <rect width={ANCHO} height={ALTO} fill="url(#tt-pergamino)" />
+          <rect width={ANCHO} height={ALTO} filter="url(#tt-manchas)" opacity="0.45" />
+          <rect width={ANCHO} height={ALTO} filter="url(#tt-grano)" opacity="0.28" className="tt-grano" />
           <g opacity="0.08" fill={TINTA}>
             <ellipse cx="180" cy="90" rx="90" ry="40" />
             <ellipse cx="860" cy="560" rx="120" ry="30" />
@@ -512,7 +601,9 @@ export default function MapaConquista({ teams, periodo, onAviso }: { teams: read
               const c = PALETA[teams[i].color];
               return (
                 <g key={teams[i].color}>
-                  <path d={t.relleno} fill={c.base} fillOpacity="0.22" stroke="none" />
+                  <path d={t.relleno} fill={c.base} fillOpacity="0.2" stroke="none" />
+                  <path d={t.relleno} fill={`url(#tt-trama-${teams[i].color})`} stroke="none" />
+                  <path d={t.frontera} fill="none" stroke={c.base} strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" opacity="0.18" />
                   <path d={t.frontera} fill="none" stroke={c.base} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.9" />
                 </g>
               );
@@ -559,8 +650,10 @@ export default function MapaConquista({ teams, periodo, onAviso }: { teams: read
           </g>
 
           <g transform={`translate(30 ${ALTO - 66})`}>
+            <path d="M-6 4 C -14 4, -14 16, -6 16 L -6 46 C -14 46, -14 34, -6 34" fill="#e8dcbd" stroke={TINTA} strokeWidth="1" />
+            <path d="M306 4 C 314 4, 314 16, 306 16 L 306 46 C 314 46, 314 34, 306 34" fill="#e8dcbd" stroke={TINTA} strokeWidth="1" />
             <rect width="300" height="46" rx="3" fill="#f6efdd" stroke={TINTA} strokeWidth="1.2" />
-            <rect x="4" y="4" width="292" height="38" rx="2" fill="none" stroke={TINTA} strokeWidth="0.5" />
+            <rect x="4" y="4" width="292" height="38" rx="2" fill="none" stroke="#b8892b" strokeWidth="0.7" />
             <text x="150" y="20" textAnchor="middle" className="tt-mapa__titulo">Guerra de conquista</text>
             <text x="150" y="35" textAnchor="middle" className="tt-mapa__subtitulo">RE/MAX Terra · {periodo} · {conquistadas} de {REJILLA.length} tierras reclamadas</text>
           </g>

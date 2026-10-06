@@ -1,5 +1,5 @@
 {
-  "generadoEl": "2026-10-06T02:46:17.814Z",
+  "generadoEl": "2026-10-06T17:54:01.001Z",
   "archivos": {
     "opciones": "OPCIONES.xlsx",
     "apartado": "APARTADO.xlsx",
@@ -176,6 +176,7 @@
   ],
   "advertencias": [
     "Operaciones compartidas con un asesor de la oficina en ASESOR 2: 16 créditos generados",
+    "No se encontró CAPACITACION.xlsx en /data — el índice de los escuderos usa opcionadas y la estimación provisional",
     "Asesor dado de baja: \"Adriana Cedillo\" — fuera del dashboard",
     "Asesor dado de baja: \"Ana Escamilla\" — fuera del dashboard (tenía 1 cierre(s) 2026 por $3,000, siguen contando en los totales de la oficina)",
     "Asesor dado de baja: \"Consuelo Becerril\" — fuera del dashboard",

@@ -12,8 +12,11 @@ import {
   TrendingUp,
 } from "lucide-react";
 import type { Advisor, DashboardData } from "../types";
-import { META_ANUAL_ASESOR, MESES_CORTOS, MESES_LARGOS } from "../config";
+import { MESES_CORTOS, MESES_LARGOS } from "../config";
 import { fMoney, fNum, nivelSemaforo, rankOf, safeDiv } from "../lib/metrics";
+import { enCapacitacion, fechaCorta, indiceCapacitacion, metaIndividual, useContextoMetas } from "../lib/metasNiveles";
+import type { ContextoMetas } from "../lib/metasNiveles";
+import { RitmoBadge } from "../components/heraldica";
 import { Avatar, Card, Delta, MonthChip, PageHead, Progress, SemaforoBadge } from "../components/ui";
 import { BarrasMensuales } from "../components/charts";
 import LeadsCuatrimestreAsesor from "../components/LeadsCuatrimestreAsesor";
@@ -34,6 +37,7 @@ function AsesoresGrid({ data, onSelect }: { data: DashboardData; onSelect: (n: s
   const [q, setQ] = useState("");
   const [verInactivos, setVerInactivos] = useState(false);
   const cm = data.currentMonth;
+  const ctx = useContextoMetas(data);
 
   const list = useMemo(() => {
     const norm = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -62,7 +66,10 @@ function AsesoresGrid({ data, onSelect }: { data: DashboardData; onSelect: (n: s
       />
       <div className="grid adv-grid">
         {list.map((a) => {
-          const metaPct = safeDiv(a.totales.comTotal, META_ANUAL_ASESOR) * 100;
+          // Meta anual de su nivel (360K / 500K / 1M) o índice si está en capacitación.
+          const escudero = enCapacitacion(a);
+          const meta = escudero ? null : metaIndividual(a, ctx);
+          const metaPct = meta ? meta.pctMeta : indiceCapacitacion(a, data, ctx).indice;
           return (
             <div className="card adv-card" key={a.nombre} onClick={() => onSelect(a.nombre)} role="button" tabIndex={0}
               onKeyDown={(e) => e.key === "Enter" && onSelect(a.nombre)}>
@@ -82,8 +89,8 @@ function AsesoresGrid({ data, onSelect }: { data: DashboardData; onSelect: (n: s
               </div>
               <div style={{ marginTop: 12 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11.5, color: "var(--text-3)", marginBottom: 5 }}>
-                  <span>Meta anual · {fMoney(META_ANUAL_ASESOR)}</span>
-                  <span className="num">{Math.round(metaPct)}%</span>
+                  <span>{meta ? `Meta anual · ${fMoney(meta.meta)}` : "Escudero · índice de formación"}</span>
+                  <span className="num">{Math.round(metaPct)}{meta ? "%" : " / 100"}</span>
                 </div>
                 <Progress pct={metaPct} />
               </div>
@@ -102,12 +109,10 @@ function AsesorDetalle({ data, advisor: a, onBack }: { data: DashboardData; advi
   const ci = cm - 1;
   const pi = pm ? pm - 1 : null;
 
-  // Meta anual individual: $360,000 (X + Y), año calendario
-  const metaPct = safeDiv(a.totales.comTotal, META_ANUAL_ASESOR) * 100;
-  const restante = Math.max(META_ANUAL_ASESOR - a.totales.comTotal, 0);
-  // Meta del cohorte por antigüedad (columna Y)
-  const tieneAntig = a.metaAntiguedad != null && a.metaAntiguedad > 0;
-  const antigPct = tieneAntig ? safeDiv(a.totales.comAsesor, a.metaAntiguedad!) * 100 : 0;
+  // Meta anual individual escalonada (360K → 500K → 1M), año calendario
+  const ctx = useContextoMetas(data);
+  const escudero = enCapacitacion(a);
+  const meta = escudero ? null : metaIndividual(a, ctx);
 
   const parMes = (serie: number[]) => ({
     actual: serie[ci],
@@ -136,7 +141,7 @@ function AsesorDetalle({ data, advisor: a, onBack }: { data: DashboardData; advi
 
       <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20 }}>
         <Avatar nombre={a.nombre} lg />
-        <SemaforoBadge pct={metaPct} />
+        {meta ? <RitmoBadge pct={meta.pctRitmo} /> : <span className="badge neutral">Escudero en formación</span>}
         {a.totales.pendientes > 0 && (
           <span className="badge info"><Clock size={13} /> {a.totales.pendientes} operación{a.totales.pendientes > 1 ? "es" : ""} pendiente{a.totales.pendientes > 1 ? "s" : ""}</span>
         )}
@@ -182,43 +187,11 @@ function AsesorDetalle({ data, advisor: a, onBack }: { data: DashboardData; advi
           <BarrasMensuales series={a.cierresMes} hasta={cm} alto={150} />
         </Card>
 
-        <Card title={`Meta anual individual · ${fMoney(META_ANUAL_ASESOR)}`} icon={<Target size={14} />} className="highlight-card">
-          <div className="pair-row"><span className="k">Año calendario</span><span className="v">1 ene – 31 dic {data.year}</span></div>
-          <div className="pair-row"><span className="k">Monto logrado (Oficina + Asesor)</span><span className="v num">{fMoney(a.totales.comTotal)}</span></div>
-          <div className="pair-row"><span className="k">Comisión Oficina (X)</span><span className="v num">{fMoney(a.totales.comOficina)}</span></div>
-          <div className="pair-row"><span className="k">Comisión Asesor (Y)</span><span className="v num">{fMoney(a.totales.comAsesor)}</span></div>
-          <div className="pair-row"><span className="k">Porcentaje de avance</span><span className="v num">{metaPct.toFixed(1)}%</span></div>
-          <div className="pair-row"><span className="k">Cantidad restante</span><span className="v num">{fMoney(restante)}</span></div>
-          <div style={{ marginTop: 14, marginBottom: 8 }}>
-            <Progress pct={metaPct} nivel={nivelSemaforo(metaPct)} />
-          </div>
-          <SemaforoBadge pct={metaPct} />
-        </Card>
+        <CohorteFicha a={a} />
       </div>
 
       <div className="section">
-        <Card title="Aporte al cohorte · meta por antigüedad (columna Y)" icon={<Target size={14} />}>
-          {tieneAntig ? (
-            <div className="detail-grid" style={{ marginTop: 0 }}>
-              <div>
-                <div className="pair-row"><span className="k">Antigüedad (menos {2} meses de capacitación)</span><span className="v num">{a.mesesAntiguedad} {a.mesesAntiguedad === 1 ? "mes" : "meses"}</span></div>
-                <div className="pair-row"><span className="k">Aporte mensual actual</span><span className="v num">{fMoney(a.tarifaMesActual)}</span></div>
-                <div className="pair-row"><span className="k">Debería llevar acumulado (Y)</span><span className="v num">{fMoney(a.metaAntiguedad!)}</span></div>
-                <div className="pair-row"><span className="k">Lleva realmente (Y)</span><span className="v num">{fMoney(a.totales.comAsesor)}</span></div>
-                <div className="pair-row"><span className="k">Diferencia</span><span className="v num" style={{ color: a.totales.comAsesor >= a.metaAntiguedad! ? "var(--ok)" : "var(--bad)" }}>{fMoney(a.totales.comAsesor - a.metaAntiguedad!)}</span></div>
-              </div>
-              <div>
-                <div className="kpi-sub" style={{ marginBottom: 6 }}>Avance sobre lo esperado</div>
-                <div style={{ marginBottom: 8 }}><Progress pct={antigPct} nivel={nivelSemaforo(antigPct)} /></div>
-                <SemaforoBadge pct={antigPct} />
-              </div>
-            </div>
-          ) : a.fechaSir ? (
-            <div className="empty">En periodo de capacitación inicial (ingresó {a.fechaSir}). El aporte al cohorte comienza al tercer mes.</div>
-          ) : (
-            <div className="empty">Sin fecha de ingreso registrada en el archivo de membresías. No es posible calcular su meta por antigüedad.</div>
-          )}
-        </Card>
+        <MetaAnualFicha data={data} a={a} ctx={ctx} />
       </div>
 
       <div className="section">
@@ -297,5 +270,95 @@ function MesVsMes({ actual, anterior, cm, pm }: { actual: number; anterior: numb
       </div>
       <Delta actual={actual} anterior={anterior} />
     </>
+  );
+}
+
+/** Aporte al cohorte · meta por antigüedad (columna Y). Va primero que la meta anual. */
+function CohorteFicha({ a }: { a: Advisor }) {
+  const tieneAntig = a.metaAntiguedad != null && a.metaAntiguedad > 0;
+  const antigPct = tieneAntig ? safeDiv(a.totales.comAsesor, a.metaAntiguedad!) * 100 : 0;
+  return (
+    <Card title="Aporte al cohorte · meta por antigüedad (columna Y)" icon={<Target size={14} />}>
+      {tieneAntig ? (
+        <div className="detail-grid" style={{ marginTop: 0 }}>
+          <div>
+            <div className="pair-row"><span className="k">Antigüedad (menos {2} meses de capacitación)</span><span className="v num">{a.mesesAntiguedad} {a.mesesAntiguedad === 1 ? "mes" : "meses"}</span></div>
+            <div className="pair-row"><span className="k">Aporte mensual actual</span><span className="v num">{fMoney(a.tarifaMesActual)}</span></div>
+            <div className="pair-row"><span className="k">Debería llevar acumulado (Y)</span><span className="v num">{fMoney(a.metaAntiguedad!)}</span></div>
+            <div className="pair-row"><span className="k">Lleva realmente (Y)</span><span className="v num">{fMoney(a.totales.comAsesor)}</span></div>
+            <div className="pair-row"><span className="k">Diferencia</span><span className="v num" style={{ color: a.totales.comAsesor >= a.metaAntiguedad! ? "var(--ok)" : "var(--bad)" }}>{fMoney(a.totales.comAsesor - a.metaAntiguedad!)}</span></div>
+          </div>
+          <div>
+            <div className="kpi-sub" style={{ marginBottom: 6 }}>Avance sobre lo esperado</div>
+            <div style={{ marginBottom: 8 }}><Progress pct={antigPct} nivel={nivelSemaforo(antigPct)} /></div>
+            <SemaforoBadge pct={antigPct} />
+          </div>
+        </div>
+      ) : a.fechaSir ? (
+        <div className="empty">En periodo de capacitación inicial (ingresó {a.fechaSir}). El aporte al cohorte comienza al tercer mes.</div>
+      ) : (
+        <div className="empty">Sin fecha de ingreso registrada en el archivo de membresías. No es posible calcular su meta por antigüedad.</div>
+      )}
+    </Card>
+  );
+}
+
+/** Meta anual individual escalonada: nivel, meta, debería llevar, lleva, ritmo y falta. */
+function MetaAnualFicha({ data, a, ctx }: { data: DashboardData; a: Advisor; ctx: ContextoMetas }) {
+  if (enCapacitacion(a)) {
+    const ind = indiceCapacitacion(a, data, ctx);
+    const pct = (v: number | null) => (v == null ? "Sin datos" : `${v.toFixed(0)}%`);
+    return (
+      <Card title="Meta anual individual · Escudero en formación" icon={<Target size={14} />} className="highlight-card">
+        <div className="detail-grid" style={{ marginTop: 0 }}>
+          <div>
+            <div className="pair-row"><span className="k">Índice de avance (0–100)</span><span className="v num">{ind.indice.toFixed(0)}</span></div>
+            <div className="pair-row"><span className="k">Opcionadas desde {MESES_CORTOS[ind.opcionadas.desdeMes - 1].toLowerCase()}</span><span className="v num">{fNum(ind.opcionadas.valor)}</span></div>
+            <div className="pair-row"><span className="k">Meta de opcionadas</span><span className="v num">{fNum(ind.opcionadas.meta)}</span></div>
+            <div className="pair-row"><span className="k">Asistencia</span><span className="v num">{pct(ind.asistencia)}</span></div>
+            <div className="pair-row"><span className="k">Participación</span><span className="v num">{pct(ind.participacion)}</span></div>
+          </div>
+          <div>
+            <div className="kpi-sub" style={{ marginBottom: 6 }}>Índice de formación</div>
+            <div style={{ marginBottom: 10 }}><Progress pct={ind.indice} nivel="brand" /></div>
+            <p style={{ margin: 0, color: "var(--text-2)" }}>{ind.mensaje}</p>
+            <div className="kpi-sub" style={{ marginTop: 8 }}>
+              En capacitación no compite en metas de dinero.{ind.fuente === "provisional" ? " Asistencia y participación: estimación provisional de la oficina." : ""}
+              {ind.sinDatos.length > 0 && ` Sin datos de ${ind.sinDatos.join(" ni ")}.`}
+            </div>
+          </div>
+        </div>
+      </Card>
+    );
+  }
+  const m = metaIndividual(a, ctx);
+  return (
+    <Card title={`Meta anual individual · nivel ${m.nivel.etiqueta}`} icon={<Target size={14} />} className="highlight-card">
+      <div className="detail-grid" style={{ marginTop: 0 }}>
+        <div>
+          <div className="pair-row"><span className="k">Año calendario</span><span className="v">1 ene – 31 dic {data.year}</span></div>
+          <div className="pair-row"><span className="k">Nivel</span><span className="v">{m.nivel.etiqueta} · {m.nivel.territorio}</span></div>
+          <div className="pair-row"><span className="k">Meta anual</span><span className="v num">{fMoney(m.meta)}</span></div>
+          <div className="pair-row"><span className="k">Debería llevar (mes {ctx.mes} de 12)</span><span className="v num">{fMoney(m.deberiaLlevar)}</span></div>
+          <div className="pair-row"><span className="k">Lleva</span><span className="v num">{fMoney(m.lleva)}</span></div>
+          <div className="pair-row"><span className="k">% de ritmo</span><span className="v"><RitmoBadge pct={m.pctRitmo} /></span></div>
+          <div className="pair-row"><span className="k">% de la meta anual</span><span className="v num">{m.pctMeta.toFixed(2)}%</span></div>
+          <div className="pair-row"><span className="k">Falta</span><span className="v num">{fMoney(m.falta)}</span></div>
+        </div>
+        <div>
+          <div className="kpi-sub" style={{ marginBottom: 6 }}>Avance de la meta anual</div>
+          <div style={{ marginBottom: 10 }}><Progress pct={m.pctMeta} nivel={nivelSemaforo(m.pctRitmo)} /></div>
+          {m.yaCasi && <div className="badge warn" style={{ marginBottom: 10 }}>Te faltan {fMoney(m.falta)} para los {m.nivel.etiqueta}</div>}
+          <div className="pair-row"><span className="k">Comisión Oficina (X)</span><span className="v num">{fMoney(a.totales.comOficina)}</span></div>
+          <div className="pair-row"><span className="k">Comisión Asesor (Y)</span><span className="v num">{fMoney(a.totales.comAsesor)}</span></div>
+          <div className="pair-row"><span className="k">Oficina + Asesor (X + Y)</span><span className="v num">{fMoney(a.totales.comTotal)}</span></div>
+          <div className="pair-row"><span className="k">Comisión total de sus operaciones</span><span className="v num">{fMoney(a.totales.comOperacion)}</span></div>
+          <div className="kpi-sub" style={{ marginTop: 8 }}>
+            360K se mide con comisión oficina + asesor; 500K y 1M con la comisión total de la operación, incluidas las compartidas.
+            Ritmo al {fechaCorta(`${ctx.hoy.anio}-${String(ctx.hoy.mes).padStart(2, "0")}-${String(ctx.hoy.dia).padStart(2, "0")}`)} · montos al {fechaCorta(ctx.fechaCorte)}.
+          </div>
+        </div>
+      </div>
+    </Card>
   );
 }

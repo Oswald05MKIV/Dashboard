@@ -277,10 +277,10 @@
 .tt-mapa__nota { margin: 0; font-size: 11.5px; color: var(--tt-muted); line-height: 1.45; }
 
 /* textos dentro del mapa */
-.tt-mapa__titulo { font-size: 15px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; fill: #5a4632; }
-.tt-mapa__subtitulo { font-size: 9px; letter-spacing: 0.04em; fill: #5a4632; }
-.tt-mapa__ciudad { font-size: 10.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; fill: #3f3022; paint-order: stroke; stroke: #f3ead6; stroke-width: 3px; stroke-linejoin: round; }
-.tt-mapa__rosa { font-size: 12px; font-weight: 700; fill: #5a4632; }
+.tt-mapa__titulo { font-family: "Cinzel", Georgia, "Times New Roman", serif; font-size: 15px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; fill: #5a4632; }
+.tt-mapa__subtitulo { font-family: "EB Garamond", Georgia, "Times New Roman", serif; font-size: 10px; letter-spacing: 0.04em; fill: #5a4632; }
+.tt-mapa__ciudad { font-family: "Cinzel", Georgia, "Times New Roman", serif; font-size: 10.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; fill: #3f3022; paint-order: stroke; stroke: #f3ead6; stroke-width: 3px; stroke-linejoin: round; }
+.tt-mapa__rosa { font-family: "Cinzel", Georgia, "Times New Roman", serif; font-size: 12px; font-weight: 700; fill: #5a4632; }
 .tt-mapa__escala { font-size: 9px; fill: #5a4632; stroke: none; }
 
 /* territorio: transición suave cuando cambia el reparto */
@@ -370,3 +370,9 @@
 }
 .tt-rows--lista .tt-row { break-inside: avoid; margin-bottom: 6px; }
 .tt-grid--fijo .tt-card--completo { grid-column: 1 / -1; }
+
+/* mapa de conquista: tipografía de pergamino para título y leyenda */
+.tt-mapa .tt-card__title { font-family: "Cinzel", Georgia, "Times New Roman", serif; font-size: 17px; font-weight: 700; letter-spacing: 0.04em; }
+.tt-mapa .tt-leyenda__name { font-family: "Cinzel", Georgia, "Times New Roman", serif; font-weight: 700; letter-spacing: 0.02em; }
+.tt-mapa .tt-mapa__nota { font-family: "EB Garamond", Georgia, "Times New Roman", serif; font-size: 13px; }
+.tt-capturando .tt-grano { display: none; } /* grano fino fuera de la imagen: pesa mucho y no se nota */

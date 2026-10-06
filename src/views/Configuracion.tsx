@@ -1,7 +1,7 @@
 import { AlertTriangle, CalendarClock, Database, FileSpreadsheet, GitMerge, RefreshCw, Target, Users } from "lucide-react";
 import validationJson from "../generated/validation.json";
 import type { DashboardData, ValidationReport } from "../types";
-import { META_ANUAL_ASESOR, MESES_CAPACITACION, MESES_LARGOS, TABLA_META_ANTIGUEDAD } from "../config";
+import { MESES_CAPACITACION, MESES_LARGOS, META_NIVELES, META_OPCIONADAS_NOVATO, PCT_CASI, PESOS_INDICE, TABLA_META_ANTIGUEDAD, UMBRAL_CASI } from "../config";
 import { fMoney } from "../lib/metrics";
 import { Card, PageHead } from "../components/ui";
 
@@ -24,16 +24,23 @@ export function Configuracion({ data }: { data: DashboardData }) {
           <div className="pair-row"><span className="k">Opciones y recorridos</span><span className="v">{validation.archivos.opciones}</span></div>
           <div className="pair-row"><span className="k">Apartados y cierres</span><span className="v">{validation.archivos.apartado}</span></div>
           {validation.archivos.membresias && <div className="pair-row"><span className="k">Membresías (Fecha Sir)</span><span className="v">{validation.archivos.membresias}</span></div>}
+          <div className="pair-row"><span className="k">Capacitación</span><span className="v">{data.capacitacionArchivo ?? "Sin archivo (estimación provisional)"}</span></div>
           <div className="pair-row"><span className="k">Datos generados</span><span className="v num">{fecha.toLocaleDateString("es-MX", { day: "2-digit", month: "long", year: "numeric" })}</span></div>
           <div className="pair-row"><span className="k">Mes detectado automáticamente</span><span className="v">{MESES_LARGOS[data.currentMonth - 1]} {data.year}</span></div>
         </Card>
         <Card title="Metas configuradas" icon={<Database size={14} />}>
           <div className="pair-row"><span className="k">Meta del cohorte (columna Y)</span><span className="v">Escalonada por antigüedad (suma)</span></div>
-          <div className="pair-row"><span className="k">Meta anual individual (X + Y)</span><span className="v num">{fMoney(META_ANUAL_ASESOR)}</span></div>
+          <div className="pair-row"><span className="k">Meta anual individual · nivel 1 (X + Y)</span><span className="v num">{fMoney(META_NIVELES.N360)}</span></div>
+          <div className="pair-row"><span className="k">Nivel 2 · comisión total de la operación</span><span className="v num">{fMoney(META_NIVELES.N500)}</span></div>
+          <div className="pair-row"><span className="k">Nivel 3 · comisión total de la operación</span><span className="v num">{fMoney(META_NIVELES.N1M)}</span></div>
+          <div className="pair-row"><span className="k">Debería llevar</span><span className="v">Meta × mes en curso ÷ 12</span></div>
+          <div className="pair-row"><span className="k">"Ya casi"</span><span className="v">Faltan ≤ {fMoney(UMBRAL_CASI)} o ≥ {PCT_CASI}% de la meta</span></div>
+          <div className="pair-row"><span className="k">Escuderos · opcionadas por mes</span><span className="v num">{META_OPCIONADAS_NOVATO}</span></div>
+          <div className="pair-row"><span className="k">Escuderos · pesos del índice</span><span className="v">Opc. {PESOS_INDICE.opcionadas * 100}% · Asist. {PESOS_INDICE.asistencia * 100}% · Part. {PESOS_INDICE.participacion * 100}%</span></div>
           <div className="pair-row"><span className="k">Capacitación inicial descontada</span><span className="v num">{MESES_CAPACITACION} meses</span></div>
           <div className="pair-row"><span className="k">Semáforo</span><span className="v">Rojo &lt;50% · Ámbar 50–74% · Verde ≥75%</span></div>
           <p style={{ fontSize: 12.5, color: "var(--text-3)", margin: "10px 0 0" }}>
-            La meta anual individual y las tarifas por antigüedad se ajustan en <code>src/config.ts</code>. El cohorte se calcula sumando el aporte esperado de cada asesor según su antigüedad.
+            Las metas anuales escalonadas, el umbral "ya casi", la meta de opcionadas y los pesos del índice de los escuderos se ajustan en <code>src/config.ts</code>; las tarifas por antigüedad, en <code>src/config.ts</code> y en el pipeline. El cohorte se calcula sumando el aporte esperado de cada asesor según su antigüedad.
           </p>
         </Card>
       </div>

@@ -60,3 +60,11 @@ export function teamsDelPeriodo(data: DashboardData, desde: number, hasta: numbe
     return { nombre: eq.nombre, color: eq.color, integrantes, total };
   });
 }
+
+/** Team al que pertenece un asesor (por nombre canónico de dashboard.json), o null. */
+export function teamDeAsesor(data: DashboardData, nombre: string): { nombre: string; color: ColorTeam } | null {
+  for (const eq of data.teams.equipos) {
+    if (eq.integrantes.some((i) => i.canonico === nombre)) return { nombre: eq.nombre, color: eq.color };
+  }
+  return null;
+}

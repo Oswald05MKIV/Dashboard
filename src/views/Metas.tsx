@@ -1,9 +1,15 @@
 import { Target, TrendingDown, TrendingUp, Users } from "lucide-react";
 import type { DashboardData } from "../types";
-import { META_ANUAL_ASESOR, MESES_LARGOS } from "../config";
-import { fMoney, fPct, nivelSemaforo, safeDiv } from "../lib/metrics";
+import { MESES_LARGOS } from "../config";
+import { fMoney, fPct, nivelSemaforo } from "../lib/metrics";
 import { Avatar, Card, Kpi, MonthChip, PageHead, Progress, SemaforoBadge } from "../components/ui";
-import { useRef } from "react";
+import { useMemo, useRef, useState } from "react";
+import { agruparPorNivel, enCapacitacion, metaIndividual, useContextoMetas } from "../lib/metasNiveles";
+import type { MetaIndividual } from "../lib/metasNiveles";
+import { EscuderosEnFormacion, MetaAnualEscalonada } from "../components/MetasEscalonadas";
+import type { VistaMetas } from "../components/MetasEscalonadas";
+import ElReino from "../components/ElReino";
+import "../components/reino.css";
 import type { CSSProperties } from "react";
 import { BotonCaptura, useAviso } from "../components/TopsJulio";
 
@@ -31,7 +37,9 @@ const GRUPOS: { clave: ClaveGrupo; titulo: string }[] = [
 
 type FilaMeta = {
   a: DashboardData["advisors"][number];
+  /** % de la meta anual de su nivel (360K / 500K / 1M); null si está en capacitación. */
   pctAnual: number;
+  meta: MetaIndividual | null;
   tieneAntig: boolean;
   pctAntig: number | null;
 };
@@ -79,7 +87,7 @@ function TablaAntiguedad({
               <tr>
                 <th>Asesor</th>
                 <th className="r">Antigüedad</th>
-                <th style={{ width: "40%" }}>Avance anual ({fMoney(META_ANUAL_ASESOR)})</th>
+                <th style={{ width: "40%" }}>Avance anual (meta de su nivel)</th>
                 <th>Cohorte</th>
               </tr>
             </thead>
@@ -96,7 +104,7 @@ function TablaAntiguedad({
                       </span>
                     </td>
                   </tr>
-                  {del.map(({ a, pctAnual, tieneAntig, pctAntig }) => {
+                  {del.map(({ a, pctAnual, meta, tieneAntig, pctAntig }) => {
                     const meses = a.mesesDesdeIngreso ?? a.mesesAntiguedad;
                     return (
                       <tr key={a.nombre} className="clickable" onClick={() => onSelect(a.nombre)}>
@@ -108,10 +116,15 @@ function TablaAntiguedad({
                         </td>
                         <td className="r num">{a.fechaSir ? `${meses} ${meses === 1 ? "mes" : "meses"}` : "—"}</td>
                         <td>
-                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                            <div style={{ flex: 1 }}><Progress pct={pctAnual} /></div>
-                            <span className="num" style={{ fontSize: 12, fontWeight: 600, minWidth: 42, textAlign: "right" }}>{pctAnual.toFixed(0)}%</span>
-                          </div>
+                          {meta ? (
+                            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                              <span className="badge neutral" style={{ minWidth: 44, justifyContent: "center" }}>{meta.nivel.etiqueta}</span>
+                              <div style={{ flex: 1 }}><Progress pct={pctAnual} /></div>
+                              <span className="num" style={{ fontSize: 12, fontWeight: 600, minWidth: 42, textAlign: "right" }}>{pctAnual.toFixed(0)}%</span>
+                            </div>
+                          ) : (
+                            <span className="badge neutral">Escudero en formación</span>
+                          )}
                         </td>
                         <td>
                           {tieneAntig
@@ -135,16 +148,23 @@ export function Metas({ data, onSelect }: { data: DashboardData; onSelect: (n: s
   const c = data.cohorte;
   const { aviso, mostrar } = useAviso();
   const mesCorte = MESES_LARGOS[data.currentMonth - 1];
+  const ctx = useContextoMetas(data);
+  const [vista, setVista] = useState<VistaMetas>("tabla");
+  const { escuderos, porNivel } = useMemo(() => agruparPorNivel(data, ctx), [data, ctx.mes, ctx.anioNuevoSinDatos]);
 
-  // Meta anual individual ($360,000 sobre X+Y)
+  // Meta anual individual escalonada (360K → 500K → 1M); los escuderos no compiten en dinero.
   const lista = data.advisors
     .filter((a) => a.activo)
-    .map((a) => ({
-      a,
-      pctAnual: safeDiv(a.totales.comTotal, META_ANUAL_ASESOR) * 100,
-      tieneAntig: a.metaAntiguedad != null && a.metaAntiguedad > 0,
-      pctAntig: a.metaAntiguedad ? safeDiv(a.totales.comAsesor, a.metaAntiguedad) * 100 : null,
-    }))
+    .map((a) => {
+      const meta = enCapacitacion(a) ? null : metaIndividual(a, ctx);
+      return {
+        a,
+        meta,
+        pctAnual: meta ? meta.pctMeta : 0,
+        tieneAntig: a.metaAntiguedad != null && a.metaAntiguedad > 0,
+        pctAntig: a.metaAntiguedad ? (a.totales.comAsesor / a.metaAntiguedad) * 100 : null,
+      };
+    })
     .sort((x, y) => y.pctAnual - x.pctAnual);
 
   // Orden de la tabla individual: por color del semáforo del cohorte
@@ -162,16 +182,18 @@ export function Metas({ data, onSelect }: { data: DashboardData; onSelect: (n: s
     return y.pctAnual - x.pctAnual;
   });
 
-  const enMeta = lista.filter((x) => x.pctAnual >= 75).length;
-  const enRiesgo = lista.filter((x) => x.pctAnual >= 50 && x.pctAnual < 75).length;
-  const criticos = lista.filter((x) => x.pctAnual < 50).length;
+  // Semáforo individual por % de ritmo de su nivel (escuderos fuera: no compiten en dinero).
+  const conMeta = lista.filter((x) => x.meta);
+  const enMeta = conMeta.filter((x) => nivelSemaforo(x.meta!.pctRitmo) === "ok").length;
+  const enRiesgo = conMeta.filter((x) => nivelSemaforo(x.meta!.pctRitmo) === "warn").length;
+  const criticos = conMeta.filter((x) => nivelSemaforo(x.meta!.pctRitmo) === "bad").length;
   const alDia = c.realAcumulado >= c.esperadoAcumulado;
 
   return (
     <>
       <PageHead
         title="Metas"
-        subtitle={`Dos metas: cohorte por antigüedad (columna Y) y meta anual individual de ${fMoney(META_ANUAL_ASESOR)} (X + Y)`}
+        subtitle="Dos metas: cohorte por antigüedad (columna Y) y meta anual individual escalonada 360K → 500K → 1M"
         tools={<MonthChip current={data.currentMonth} previous={data.previousMonth} year={data.year} />}
       />
 
@@ -201,7 +223,7 @@ export function Metas({ data, onSelect }: { data: DashboardData; onSelect: (n: s
             </div>
             <SemaforoBadge pct={c.avancePct} />
             <div style={{ display: "flex", gap: 8, marginLeft: "auto", flexWrap: "wrap" }}>
-              <span className="badge ok"><span className="dot ok" /> {enMeta} en meta anual</span>
+              <span className="badge ok" title="Según el % de ritmo de la meta anual de su nivel"><span className="dot ok" /> {enMeta} en meta anual</span>
               <span className="badge warn"><span className="dot warn" /> {enRiesgo} en riesgo</span>
               <span className="badge bad"><span className="dot bad" /> {criticos} críticos</span>
             </div>
@@ -211,6 +233,13 @@ export function Metas({ data, onSelect }: { data: DashboardData; onSelect: (n: s
             Avance {fPct(c.avancePct)} de lo que el cohorte debería llevar acumulado a {MESES_LARGOS[data.currentMonth - 1].toLowerCase()}. {c.asesoresConMeta} asesores con meta activa (fuera de capacitación).
           </div>
         </Card>
+      </div>
+
+      {/* ---- Meta anual escalonada + escuderos + El Reino ---- */}
+      <MetaAnualEscalonada data={data} ctx={ctx} porNivel={porNivel} vista={vista} onVista={setVista} onSelect={onSelect} onAviso={mostrar} />
+      <EscuderosEnFormacion data={data} ctx={ctx} escuderos={escuderos} vista={vista} onVista={setVista} onSelect={onSelect} onAviso={mostrar} />
+      <div className="section">
+        <ElReino data={data} ctx={ctx} escuderos={escuderos} porNivel={porNivel} onAviso={mostrar} />
       </div>
 
       {/* ---- Tabla individual por antigüedad (una sola imagen) ---- */}
