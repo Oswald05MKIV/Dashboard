@@ -3,13 +3,10 @@ import type { CSSProperties } from 'react';
 import dashboardJson from '../generated/dashboard.json';
 import type { Advisor, DashboardData } from '../types';
 import type { ColorTeam, IntegranteTeam, Team } from '../lib/teams';
-import { conversion, fMoney, fNum, fPct, rankOf, safeDiv } from '../lib/metrics';
+import { fMoney, fNum, fPct, rankOf, safeDiv } from '../lib/metrics';
 import { contextoMetas, enCapacitacion, indiceCapacitacion, metaIndividual } from '../lib/metasNiveles';
 import { buscarPorNombre } from '../lib/nombres';
-import { leadsCuatrimestre, leadsCuatrimestreDe } from '../lib/leadsCuatrimestre';
-import type { LeadsCuatrimestreFila } from '../lib/leadsCuatrimestre';
 import { CIVILIZACIONES, Estandarte, EstandarteG, PALETA, Soldado } from './civilizaciones';
-import { abrevMes } from './LeadsCuatrimestreAsesor';
 import { BotonCaptura } from './TopsJulio';
 
 /**
@@ -17,8 +14,8 @@ import { BotonCaptura } from './TopsJulio';
  *
  * Cada civilización (equipo) controla una parte del mapa proporcional a su
  * desempeño. El puntaje se arma con las métricas que ya calcula el dashboard:
- * las del periodo (tabla de Teams) y las anuales de dashboard.json (cierres,
- * comisión, leads del cuatrimestre, conversión). Todo se deriva con useMemo, así
+ * las del periodo (tabla de Teams) y las anuales de dashboard.json (cierres y
+ * comisión). Los leads NO cuentan ni se muestran en Teams. Todo se deriva con useMemo, así
  * que cuando cambian los datos el mapa se recalcula solo.
  *
  * El territorio es una rejilla de hexágonos: cada casilla se la queda la
@@ -37,7 +34,6 @@ export type Miembro = {
   fila: IntegranteTeam;
   team: Team;
   advisor: Advisor | null;
-  cuatri: LeadsCuatrimestreFila | null;
 };
 
 type StatsTeam = {
@@ -45,9 +41,6 @@ type StatsTeam = {
   miembros: Miembro[];
   cierres: number;
   comTotal: number;
-  leadsAnio: number;
-  leadsCuatri: number;
-  conversion: number;
 };
 
 /** Métricas que alimentan el puntaje y su peso relativo. */
@@ -55,12 +48,9 @@ const METRICAS_MAPA: { nombre: string; peso: number; valor: (s: StatsTeam) => nu
   { nombre: 'recorridos', peso: 1, valor: (s) => s.team.total.recorridos },
   { nombre: 'opciones mostradas', peso: 1, valor: (s) => s.team.total.mostradas },
   { nombre: 'propiedades opcionadas', peso: 1.5, valor: (s) => s.team.total.opcionadas },
-  { nombre: 'leads del mes', peso: 1, valor: (s) => s.team.total.leads },
-  { nombre: 'leads del cuatrimestre', peso: 1, valor: (s) => s.leadsCuatri },
   { nombre: 'monto en rentas', peso: 1.5, valor: (s) => s.team.total.rentas },
   { nombre: 'monto en ventas', peso: 2, valor: (s) => s.team.total.ventas },
   { nombre: 'cierres del año', peso: 2, valor: (s) => s.cierres },
-  { nombre: 'conversión leads → cierres', peso: 1, valor: (s) => s.conversion },
   { nombre: 'comisión total', peso: 2, valor: (s) => s.comTotal },
 ];
 
@@ -70,19 +60,14 @@ function statsDe(teams: readonly Team[]): StatsTeam[] {
       fila,
       team,
       advisor: (data.advisors.find((x) => x.nombre === fila.canonico) ?? buscarPorNombre(data.advisors, fila.nombre)) ?? null,
-      cuatri: leadsCuatrimestreDe(fila.canonico ?? fila.nombre),
     }));
     const sum = (f: (m: Miembro) => number) => miembros.reduce((acc, m) => acc + f(m), 0);
     const cierres = sum((m) => m.advisor?.totales.cierres ?? 0);
-    const leadsAnio = sum((m) => m.advisor?.totales.leads ?? 0);
     return {
       team,
       miembros,
       cierres,
       comTotal: sum((m) => m.advisor?.totales.comTotal ?? 0),
-      leadsAnio,
-      leadsCuatri: sum((m) => m.cuatri?.total ?? 0),
-      conversion: conversion(leadsAnio, cierres),
     };
   });
 }
@@ -443,7 +428,6 @@ function PanelAsesor({ m, onCerrar }: { m: Miembro; onCerrar: () => void }) {
   const c = PALETA[m.team.color];
   const civ = CIVILIZACIONES[m.team.color];
   const a = m.advisor;
-  const cuatri = leadsCuatrimestre();
   // Meta anual de su nivel (360K / 500K / 1M); en capacitación, índice de formación.
   const ctx = contextoMetas(data);
   const escudero = a ? enCapacitacion(a) : false;
@@ -467,28 +451,18 @@ function PanelAsesor({ m, onCerrar }: { m: Miembro; onCerrar: () => void }) {
       <Fila k="Recorridos" v={fNum(m.fila.recorridos)} />
       <Fila k="Opciones mostradas" v={fNum(m.fila.mostradas)} />
       <Fila k="Propiedades opcionadas" v={Number.isInteger(m.fila.opcionadas) ? fNum(m.fila.opcionadas) : m.fila.opcionadas.toFixed(1)} />
-      <Fila k="Leads" v={fNum(m.fila.leads)} />
       <Fila k="Monto en rentas" v={mxn(m.fila.rentas)} />
       <Fila k="Monto en ventas" v={mxn(m.fila.ventas)} />
 
       {a && (
         <>
           <p className="tt-panel__section">Acumulado {data.year}</p>
-          <Fila k={`Leads ${data.year}`} v={fNum(a.totales.leads)} />
-          {m.cuatri && cuatri && (
-            <>
-              <Fila k={`Leads último cuatrimestre (${abrevMes(cuatri.etiquetas[0])}–${abrevMes(cuatri.etiquetas[cuatri.etiquetas.length - 1])})`} v={fNum(m.cuatri.total)} />
-              <Fila k="Promedio mensual del cuatrimestre" v={fNum(m.cuatri.promedio)} />
-              <Fila k={`${abrevMes(cuatri.mesEnCurso.etiqueta)} (en curso)`} v={fNum(m.cuatri.mesEnCurso)} />
-            </>
-          )}
           <Fila k="Recorridos" v={fNum(a.totales.recorridos)} />
           <Fila k="Opciones" v={fNum(a.totales.opciones)} />
           <Fila k="Propiedades opcionadas" v={fNum(a.totales.opcionadas)} />
           <Fila k="Cierres" v={fNum(a.totales.cierres)} />
           <Fila k="Apartados" v={fNum(a.totales.apartados)} />
           <Fila k="Operaciones pendientes" v={fNum(a.totales.pendientes)} />
-          <Fila k="Conversión leads → cierres" v={fPct(conversion(a.totales.leads, a.totales.cierres))} />
 
           <p className="tt-panel__section">Productividad</p>
           <Fila k="Comisión Oficina (X)" v={mxn(a.totales.comOficina)} />

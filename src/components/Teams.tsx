@@ -29,7 +29,6 @@ const METRICAS: { clave: keyof TotalTeam; nombre: string }[] = [
   { clave: 'recorridos', nombre: 'recorridos' },
   { clave: 'mostradas', nombre: 'opciones mostradas' },
   { clave: 'opcionadas', nombre: 'propiedades opcionadas' },
-  { clave: 'leads', nombre: 'leads' },
   { clave: 'rentas', nombre: 'monto en rentas' },
   { clave: 'ventas', nombre: 'monto en ventas' },
 ];
@@ -85,7 +84,6 @@ function TarjetaTeam({ team, insignias, onAviso }: { team: Team; insignias: stri
           <col className="tt-c-num" />
           <col className="tt-c-num2" />
           <col className="tt-c-num2" />
-          <col className="tt-c-num3" />
           <col className="tt-c-money" />
           <col className="tt-c-money" />
         </colgroup>
@@ -95,7 +93,6 @@ function TarjetaTeam({ team, insignias, onAviso }: { team: Team; insignias: stri
             <th>Rec.</th>
             <th>Most.</th>
             <th>Capt.</th>
-            <th>Leads</th>
             <th>Rentas</th>
             <th>Ventas</th>
           </tr>
@@ -109,7 +106,6 @@ function TarjetaTeam({ team, insignias, onAviso }: { team: Team; insignias: stri
               <td className="tt-n">{cifra(p.recorridos)}</td>
               <td className="tt-n">{cifra(p.mostradas)}</td>
               <td className="tt-n">{cifra(p.opcionadas)}</td>
-              <td className="tt-n">{cifra(p.leads)}</td>
               <td className="tt-n tt-m">{p.rentas ? mxnCorto(p.rentas) : <span className="tt-zero">—</span>}</td>
               <td className="tt-n tt-m">{p.ventas ? mxnCorto(p.ventas) : <span className="tt-zero">—</span>}</td>
             </tr>
@@ -121,7 +117,6 @@ function TarjetaTeam({ team, insignias, onAviso }: { team: Team; insignias: stri
             <td className="tt-n">{team.total.recorridos}</td>
             <td className="tt-n">{team.total.mostradas}</td>
             <td className="tt-n">{num(team.total.opcionadas)}</td>
-            <td className="tt-n">{team.total.leads}</td>
             <td className="tt-n tt-m">{mxnCorto(team.total.rentas)}</td>
             <td className="tt-n tt-m">{mxnCorto(team.total.ventas)}</td>
           </tr>

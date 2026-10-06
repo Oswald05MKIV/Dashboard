@@ -171,11 +171,10 @@
   font-size: 12.5px;
 }
 /* Anchos por columna (suman 100%) */
-.tt-tbl .tt-c-asesor { width: 23%; }
-.tt-tbl .tt-c-num    { width: 8%; }
-.tt-tbl .tt-c-num2   { width: 11%; }
-.tt-tbl .tt-c-num3   { width: 10%; }
-.tt-tbl .tt-c-money  { width: 18.5%; }
+.tt-tbl .tt-c-asesor { width: 27%; }
+.tt-tbl .tt-c-num    { width: 9%; }
+.tt-tbl .tt-c-num2   { width: 12.5%; }
+.tt-tbl .tt-c-money  { width: 19.5%; }
 
 .tt-tbl th, .tt-tbl td { padding: 6px 3px; text-align: right; }
 .tt-tbl th:first-child, .tt-tbl td:first-child {
