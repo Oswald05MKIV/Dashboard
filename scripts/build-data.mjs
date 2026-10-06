@@ -117,15 +117,22 @@ for (const { name, month } of monthSheets) {
 
 // Opcionadas que faltan en OPCIONES.xlsx. Es un MÍNIMO: solo se aplica si la
 // hoja del mes trae menos, así que cuando se capture en el Excel no se duplica.
+// tipo: "venta" | "renta" para que también cuente en el desglose.
 const OPCIONADAS_MINIMAS = [
-  { nombre: "Noel Castro", mes: 8, opcionadas: 1, motivo: "opcionó una propiedad en agosto; no viene en la hoja AGOSTO 2026" },
+  { nombre: "Noel Castro", mes: 8, opcionadas: 1, tipo: "venta", motivo: "opcionó una propiedad (venta) en agosto; no viene en la hoja AGOSTO 2026" },
 ];
 for (const f of OPCIONADAS_MINIMAS) {
   const canon = rosterSet.get(strip(f.nombre)) ?? f.nombre;
   const delMes = (actividad[f.mes] ??= {});
   const prev = delMes[canon] ?? { recorridos: 0, opciones: 0, opcionadas: 0, opcionadasRenta: 0, opcionadasVenta: 0, leads: 0 };
   if (prev.opcionadas >= f.opcionadas) continue;
-  delMes[canon] = { ...prev, opcionadas: f.opcionadas };
+  const faltan = f.opcionadas - prev.opcionadas;
+  delMes[canon] = {
+    ...prev,
+    opcionadas: f.opcionadas,
+    opcionadasVenta: prev.opcionadasVenta + (f.tipo === "venta" ? faltan : 0),
+    opcionadasRenta: prev.opcionadasRenta + (f.tipo === "renta" ? faltan : 0),
+  };
   if (!rosterSet.has(strip(canon))) rosterSet.set(strip(canon), canon);
   validation.fechasCorregidas.push(`Opcionadas de ${canon} en ${MESES[f.mes - 1]}: ${prev.opcionadas} → ${f.opcionadas} (${f.motivo})`);
 }
@@ -435,7 +442,6 @@ if (MEMBRESIAS_PATH) {
   // Correcciones manuales de Fecha Sir (errores de captura en el archivo de membresías)
   const CORRECCIONES_FECHA_SIR = [
     { nombre: "Christian Díaz Padilla", y: 2025, m: 3, motivo: "el archivo indica 2024; ingreso real 2025" },
-    { nombre: "Martha Ochoa", y: 2026, m: 3, motivo: "el archivo indica abril 2026; lleva 7 meses (ingreso real marzo 2026)" },
   ];
   // Fechas de ingreso capturadas a mano para quien todavía no viene en el
   // archivo de membresías (o viene mal). Se aplican aunque no tenga fecha.
