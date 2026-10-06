@@ -1,5 +1,5 @@
 {
-  "generadoEl": "2026-10-06T17:54:01.001Z",
+  "generadoEl": "2026-10-06T18:05:09.597Z",
   "archivos": {
     "opciones": "OPCIONES.xlsx",
     "apartado": "APARTADO.xlsx",
@@ -11,8 +11,10 @@
     "Filas 77 y 78 (Susana Ávila Basalrua, Peña de Bernal 5151-D 65 Villa Romana, E…): registro duplicado — se conservó la fila 78"
   ],
   "fechasCorregidas": [
+    "Opcionadas de Noel Castro en agosto: 0 → 1 (opcionó una propiedad en agosto; no viene en la hoja AGOSTO 2026)",
     "Fecha de ingreso de Angel Gabriel Martinez: capturada a mano 2026-08-07 (ingreso 7 ago 2026, no viene en membresías)",
-    "Fecha Sir de Christian Díaz Padilla: corregida a 2025-03 (el archivo indica 2024; ingreso real 2025)"
+    "Fecha Sir de Christian Díaz Padilla: corregida a 2025-03 (el archivo indica 2024; ingreso real 2025)",
+    "Fecha Sir de Martha Ochoa: corregida a 2026-03 (el archivo indica abril 2026; lleva 7 meses (ingreso real marzo 2026))"
   ],
   "nombresNormalizados": [
     "\"Lorena Ramos\" → \"Lorena Ramos Quevedo\"",
