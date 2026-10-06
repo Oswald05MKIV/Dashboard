@@ -119,7 +119,6 @@ for (const { name, month } of monthSheets) {
 const ASESORES_ALTA = [
   "Rocío Ávalos",
   "Olivia Flores",
-  "Sophie de la Torre",
 ];
 for (const n of ASESORES_ALTA) {
   const key = strip(n);
@@ -168,6 +167,7 @@ const ASESORES_BAJA = [
   "Consuelo Ramírez",
   "Consuelo Becerril",
   "Oswaldo Sánchez",
+  "Sophie de la Torre",
 ];
 
 /** true  = sus operaciones ya cerradas siguen sumando a los totales de la oficina
@@ -416,6 +416,17 @@ if (MEMBRESIAS_PATH) {
   const CORRECCIONES_FECHA_SIR = [
     { nombre: "Christian Díaz Padilla", y: 2025, m: 3, motivo: "el archivo indica 2024; ingreso real 2025" },
   ];
+  // Fechas de ingreso capturadas a mano para quien todavía no viene en el
+  // archivo de membresías (o viene mal). Se aplican aunque no tenga fecha.
+  const FECHAS_INGRESO_MANUALES = [
+    { nombre: "Angel Gabriel Martinez", y: 2026, m: 8, d: 7, motivo: "ingreso 7 ago 2026, no viene en membresías" },
+  ];
+  for (const f of FECHAS_INGRESO_MANUALES) {
+    const canon = [...rosterSet.values()].find((n) => strip(n) === strip(f.nombre)) ?? f.nombre;
+    fechaSirPorAsesor.set(strip(canon), { y: f.y, m: f.m, d: f.d });
+    validation.advertencias = validation.advertencias.filter((x) => !x.includes(`Sin fecha de ingreso (Fecha Sir) para "${canon}"`));
+    validation.fechasCorregidas.push(`Fecha de ingreso de ${canon}: capturada a mano ${f.y}-${String(f.m).padStart(2, "0")}-${String(f.d).padStart(2, "0")} (${f.motivo})`);
+  }
   for (const c of CORRECCIONES_FECHA_SIR) {
     const key = strip(c.nombre);
     if (fechaSirPorAsesor.has(key)) {

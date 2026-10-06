@@ -1,5 +1,5 @@
 {
-  "generadoEl": "2026-10-06T02:00:19.640Z",
+  "generadoEl": "2026-10-06T02:46:17.814Z",
   "archivos": {
     "opciones": "OPCIONES.xlsx",
     "apartado": "APARTADO.xlsx",
@@ -11,6 +11,7 @@
     "Filas 77 y 78 (Susana Ávila Basalrua, Peña de Bernal 5151-D 65 Villa Romana, E…): registro duplicado — se conservó la fila 78"
   ],
   "fechasCorregidas": [
+    "Fecha de ingreso de Angel Gabriel Martinez: capturada a mano 2026-08-07 (ingreso 7 ago 2026, no viene en membresías)",
     "Fecha Sir de Christian Díaz Padilla: corregida a 2025-03 (el archivo indica 2024; ingreso real 2025)"
   ],
   "nombresNormalizados": [
@@ -175,7 +176,6 @@
   ],
   "advertencias": [
     "Operaciones compartidas con un asesor de la oficina en ASESOR 2: 16 créditos generados",
-    "Sin fecha de ingreso (Fecha Sir) para \"Angel Gabriel Martinez\" en el archivo de membresías — meta individual no calculada",
     "Asesor dado de baja: \"Adriana Cedillo\" — fuera del dashboard",
     "Asesor dado de baja: \"Ana Escamilla\" — fuera del dashboard (tenía 1 cierre(s) 2026 por $3,000, siguen contando en los totales de la oficina)",
     "Asesor dado de baja: \"Consuelo Becerril\" — fuera del dashboard",
@@ -191,6 +191,7 @@
     "Asesor dado de baja: \"Marilú Jasso Reinoso\" — fuera del dashboard (tenía 1 cierre(s) 2026 por $1,875, siguen contando en los totales de la oficina)",
     "Asesor dado de baja: \"Norma Janet Canaan Enciso\" — fuera del dashboard",
     "Asesor dado de baja: \"Oswaldo Sánchez\" — fuera del dashboard",
+    "Asesor dado de baja: \"Sophie de la Torre\" — fuera del dashboard",
     "Asesor dado de baja: \"Susana Ávila Basalrua\" — fuera del dashboard (tenía 2 cierre(s) 2026 por $75,550, siguen contando en los totales de la oficina)",
     "Asesor dado de baja: \"Susana Cruz\" — fuera del dashboard",
     "Asesor externo \"Alejandro Jonguitud\" sin actividad 2026 (solo operaciones de años anteriores) — excluido del dashboard",
@@ -200,8 +201,7 @@
     "Asesor externo \"Sandra Diaz\" sin actividad 2026 (solo operaciones de años anteriores) — excluido del dashboard",
     "Teams: \"Liz Pérez\" (Griegos) está dado de baja — fuera del equipo",
     "Teams: \"Susana Ávila\" (Troyanos) está dado de baja — fuera del equipo",
-    "Teams: \"Alma Veronica Flores Guzman\" está activo pero no pertenece a ningún equipo",
-    "Teams: \"Sophie de la Torre\" está activo pero no pertenece a ningún equipo"
+    "Teams: \"Alma Veronica Flores Guzman\" está activo pero no pertenece a ningún equipo"
   ],
   "asesoresFueraDeRoster": [
     "Fila 5: \"Leticia Mora\" no está en el roster de OPCIONES (se incluye como asesor independiente)",
