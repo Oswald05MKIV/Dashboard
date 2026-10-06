@@ -63,6 +63,12 @@ export interface Advisor {
   apartadosMes: number[];
   comOficinaMes: number[];
   comAsesorMes: number[];
+  cierresPropiosMes?: number[];
+  /** Total de la operación de cierres propios (Asesor 1) por mes. */
+  volRentaMes: number[];
+  volVentaMes: number[];
+  opsRentaMes: number[];
+  opsVentaMes: number[];
   totales: AdvisorTotals;
   operacionesPendientes: OperacionPendiente[];
   cierresDetalle: CierreDetalle[];
@@ -77,8 +83,24 @@ export interface Cohorte {
   avancePct: number;
 }
 
+export interface TeamsData {
+  inicioMes: number;
+  equipos: {
+    nombre: string;
+    color: "red" | "blue" | "white" | "green" | "purple" | "orange";
+    integrantes: {
+      nombre: string;
+      canonico: string;
+      sinDatos: boolean;
+      meses: Record<"recorridos" | "mostradas" | "opcionadas" | "leads" | "rentas" | "ventas", number[]>;
+    }[];
+  }[];
+  sinEquipo: string[];
+}
+
 export interface DashboardData {
   year: number;
+  teams: TeamsData;
   cohorte: Cohorte;
   currentMonth: number;
   previousMonth: number | null;
@@ -110,6 +132,10 @@ export interface DashboardData {
       cierres: number[];
       comOficina: number[];
       comAsesor: number[];
+      volRenta: number[];
+      volVenta: number[];
+      opcionadasRenta: number[];
+      opcionadasVenta: number[];
     };
   };
 }

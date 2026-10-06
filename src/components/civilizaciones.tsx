@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import type { ColorTeam } from '../data/agosto2026Teams';
+import type { ColorTeam } from '../lib/teams';
 
 /**
  * Iconografía de las civilizaciones de Teams. Todo es SVG vectorial dibujado a

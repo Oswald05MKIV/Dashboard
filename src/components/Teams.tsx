@@ -1,11 +1,15 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
-import { agosto2026Teams } from '../data/agosto2026Teams';
-import type { Team, TotalTeam } from '../data/agosto2026Teams';
+import dashboardJson from '../generated/dashboard.json';
+import type { DashboardData } from '../types';
+import { periodosTeams, teamsDelPeriodo } from '../lib/teams';
+import type { Team, TotalTeam } from '../lib/teams';
 import { Estandarte, PALETA } from './civilizaciones';
 import MapaConquista from './MapaConquista';
 import { BotonCaptura, useAviso } from './TopsJulio';
 import './tops-teams.css';
+
+const data = dashboardJson as unknown as DashboardData;
 
 const mxn = (n: number) =>
   n.toLocaleString('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 });
@@ -131,21 +135,36 @@ export default function Teams() {
   const ref = useRef<HTMLDivElement>(null);
   const { aviso, mostrar } = useAviso();
   const [vistaFija, setVistaFija] = useState(false);
-  const teams = agosto2026Teams.teams as readonly Team[];
+  const periodos = useMemo(() => periodosTeams(data), []);
+  const [clave, setClave] = useState(periodos[0]?.clave ?? '');
+  const periodo = periodos.find((p) => p.clave === clave) ?? periodos[0];
+  const teams = useMemo(() => teamsDelPeriodo(data, periodo.desde, periodo.hasta), [periodo]);
   const insignias = lideres(teams);
+  const etiquetaPeriodo = `${periodo.etiqueta.replace(' (en curso)', '')} ${data.year}`;
 
   return (
     <div className={`tt-root${vistaFija ? ' tt-fijo' : ''}`} ref={ref}>
       <header className="tt-head">
         <div>
-          <p className="tt-eyebrow">RE/MAX Terra · Equipos</p>
+          <p className="tt-eyebrow">RE/MAX Terra · Equipos · {etiquetaPeriodo}</p>
           <h2 className="tt-title">Teams</h2>
           <p className="tt-sub">
-            Seis civilizaciones con los mismos indicadores del mes sumados por equipo. Los montos son el
-            total de la operación de lo cerrado dentro del periodo.
+            Seis civilizaciones con los indicadores sumados por equipo. Los montos son el total de la
+            operación de lo cerrado dentro del periodo.
           </p>
         </div>
         <div className="tt-acciones">
+          <select
+            className="tt-cap"
+            value={periodo.clave}
+            onChange={(e) => setClave(e.target.value)}
+            aria-label="Periodo"
+            title="Periodo que se suma en las tarjetas y el mapa"
+          >
+            {periodos.map((p) => (
+              <option key={p.clave} value={p.clave}>{p.etiqueta}</option>
+            ))}
+          </select>
           <button
             type="button"
             className="tt-cap"
@@ -154,13 +173,9 @@ export default function Teams() {
           >
             {vistaFija ? 'Vista automática' : 'Vista 3 columnas'}
           </button>
-          <BotonCaptura destino={ref} archivo="teams" etiqueta="Capturar todo" solido onAviso={mostrar} />
+          <BotonCaptura destino={ref} archivo={`teams-${periodo.clave}`} etiqueta="Capturar todo" solido onAviso={mostrar} />
         </div>
       </header>
-
-      <p className="tt-banner">
-        <strong>Los equipos arrancan en ceros.</strong> {agosto2026Teams.teamsNota}
-      </p>
 
       <div className="tt-grid">
         {teams.map((t) => (
@@ -169,13 +184,13 @@ export default function Teams() {
       </div>
 
       <div className="tt-mapa-seccion">
-        <MapaConquista teams={teams} periodo={agosto2026Teams.periodo} onAviso={mostrar} />
+        <MapaConquista teams={teams} periodo={etiquetaPeriodo} onAviso={mostrar} />
       </div>
 
       <p className="tt-foot">
         Rec. = recorridos · Most. = opciones mostradas · Capt. = propiedades opcionadas ·
         Rentas y Ventas = total de la operación de lo cerrado en el periodo (los montos de un
-        millón o más se abrevian, p. ej. $1.98 M).
+        millón o más se abrevian, p. ej. $1.98 M). Se actualiza solo con cada carga de archivos.
       </p>
 
       {aviso && <div className="tt-toast">{aviso}</div>}

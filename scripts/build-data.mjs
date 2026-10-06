@@ -123,7 +123,11 @@ const ASESORES_ALTA = [
 ];
 for (const n of ASESORES_ALTA) {
   const key = strip(n);
-  if (!rosterSet.has(key)) rosterSet.set(key, n);
+  const toks = key.split(" ");
+  // Si OPCIONES ya lo trae (aunque sea con nombre más completo, p. ej.
+  // "Rocío Ávalos Alegría"), no se agrega otra vez: evita duplicados.
+  const yaEsta = [...rosterSet.keys()].some((k) => toks.every((t) => k.split(" ").includes(t)));
+  if (!yaEsta) rosterSet.set(key, n);
 }
 const ALTA_KEYS = new Set(ASESORES_ALTA.map(strip));
 
@@ -458,8 +462,15 @@ const advisors = [...advisorNames].sort((a, b) => strip(a).localeCompare(strip(b
 
   const cierresMes = emptyMonths(), apartadosMes = emptyMonths(), comOficinaMes = emptyMonths(), comAsesorMes = emptyMonths();
   const cierresPropiosMes = emptyMonths(); // sin los créditos por ir en ASESOR 2 (para no contar la operación dos veces)
+  // Volumen (total de la operación) de cierres propios por mes, separado renta/venta.
+  // Es lo que usan Tops del mes y Teams.
+  const volRentaMes = emptyMonths(), volVentaMes = emptyMonths(), opsRentaMes = emptyMonths(), opsVentaMes = emptyMonths();
   cierres2026.forEach((o) => {
     cierresMes[o.cierreM - 1]++;
+    if (!o.esCredito2) {
+      if (o.tipo === "RENTA") { volRentaMes[o.cierreM - 1] += o.montoOperacion; opsRentaMes[o.cierreM - 1]++; }
+      else { volVentaMes[o.cierreM - 1] += o.montoOperacion; opsVentaMes[o.cierreM - 1]++; }
+    }
     if (!o.esCredito2) cierresPropiosMes[o.cierreM - 1]++;
     comOficinaMes[o.cierreM - 1] += o.comOficina; comAsesorMes[o.cierreM - 1] += o.comAsesor;
   });
@@ -501,6 +512,7 @@ const advisors = [...advisorNames].sort((a, b) => strip(a).localeCompare(strip(b
     metaAnio: META_ANIO,   // meta individual $360,000 (X+Y), año calendario
     actividad: act,
     cierresMes, apartadosMes, comOficinaMes, comAsesorMes, cierresPropiosMes,
+    volRentaMes, volVentaMes, opsRentaMes, opsVentaMes,
     totales: {
       cierresPropios: cierres2026.filter((o) => !o.esCredito2).length,
       creditosCompartidos: cierres2026.filter((o) => o.esCredito2).length,
@@ -565,6 +577,10 @@ const totals = {
     cierres: sumMonths((a) => a.cierresPropiosMes),
     comOficina: sumMonths((a) => a.comOficinaMes),
     comAsesor: sumMonths((a) => a.comAsesorMes),
+    volRenta: sumMonths((a) => a.volRentaMes),
+    volVenta: sumMonths((a) => a.volVentaMes),
+    opcionadasRenta: sumMonths((a) => a.actividad.opcionadasRenta),
+    opcionadasVenta: sumMonths((a) => a.actividad.opcionadasVenta),
   },
 };
 
@@ -622,8 +638,81 @@ const leadsCuatrimestre = {
   porAsesor: filasCuatrimestre,
 };
 
+/* ------------------------------------------------------------------ */
+/* 7) TEAMS — integrantes de cada equipo                                */
+/*    Los números NO se escriben a mano: salen de los mismos asesores   */
+/*    de arriba. Si alguien está en ASESORES_BAJA desaparece solo de su */
+/*    equipo. Para mover a alguien de equipo, cambiarlo aquí.           */
+/*    [nombre corto que se muestra, nombre como viene en OPCIONES]      */
+/* ------------------------------------------------------------------ */
+const TEAMS_INICIO_MES = 8; // la medición por equipo arrancó en agosto
+const TEAMS = [
+  { nombre: "Chinos", color: "red", integrantes: [
+    ["Erik Trotter", "Erik Trotter Bustamante"], ["Martha Ochoa", "Martha Ochoa"],
+    ["Daniela Morales", "Daniela Morales"], ["Erick Rosales", "Erick Rosales Pallares"] ] },
+  { nombre: "Aztecas", color: "blue", integrantes: [
+    ["Pily González", "Pilar González Ávila"], ["Luis Alcántar", "Luis Fernando Alcántar"],
+    ["Adri Regalado", "Adriana Regalado"], ["Gis García", "Nidia Gisela García Trujillo"], ["Noel Castro", "Noel Castro"] ] },
+  { nombre: "Persas", color: "white", integrantes: [
+    ["Sol Huerta", "Marisol Huerta Ruiz"], ["Adri Calva", "Adriana Calva"], ["Héctor de la Peña", "Héctor de la Peña"],
+    ["Elena Romano", "María Elena Romano Pelayo"], ["Angel Martínez", "Angel Gabriel Martinez"] ] },
+  { nombre: "Griegos", color: "green", integrantes: [
+    ["Mariana Vega", "Mariana Vega"], ["Chris Alvarado", "Christian Alvarado Martínez"],
+    ["Liz Pérez", "Lizbeth Pérez"], ["Lesley García", "Lesley García"] ] },
+  { nombre: "Troyanos", color: "purple", integrantes: [
+    ["Judith Diosdado", "Judith Diosdado Torres"], ["Susana Ávila", "Susana Ávila Basalrúa"],
+    ["Angie Bostal", "Maria de los Angeles Bostal"], ["Olivia Flores", "Olivia Flores"] ] },
+  { nombre: "Romanos", color: "orange", integrantes: [
+    ["Lore Ramos", "Lorena Ramos Quevedo"], ["Chris Díaz", "Christian Díaz Padilla"], ["Alberto Flores", "Alberto Flores Gómez"],
+    ["Julieta Mar", "Julieta Mar Rodríguez"], ["Rocío Ávalos", "Rocío Ávalos Alegría"] ] },
+];
+
+const buscarAsesor = (nombre) => {
+  const key = strip(nombre);
+  const exacto = advisorsFinal.find((a) => strip(a.nombre) === key);
+  if (exacto) return exacto;
+  const toks = key.split(" ");
+  const hits = advisorsFinal.filter((a) => toks.every((t) => strip(a.nombre).split(" ").includes(t)));
+  return hits.length === 1 ? hits[0] : null;
+};
+const enEquipo = new Set();
+const teams = {
+  inicioMes: TEAMS_INICIO_MES,
+  equipos: TEAMS.map((t) => ({
+    nombre: t.nombre,
+    color: t.color,
+    integrantes: t.integrantes
+      .filter(([corto, canon]) => {
+        if (esBaja(canon)) { validation.advertencias.push(`Teams: "${corto}" (${t.nombre}) está dado de baja — fuera del equipo`); return false; }
+        return true;
+      })
+      .map(([corto, canon]) => {
+        const a = buscarAsesor(canon);
+        if (!a) validation.advertencias.push(`Teams: no se encontró a "${canon}" (${t.nombre}) en los datos — aparece en ceros`);
+        else enEquipo.add(a.nombre);
+        const cero = emptyMonths();
+        return {
+          nombre: corto,
+          canonico: a?.nombre ?? canon,
+          sinDatos: !a,
+          meses: {
+            recorridos: a?.actividad.recorridos ?? cero,
+            mostradas: a?.actividad.opciones ?? cero,
+            opcionadas: a?.actividad.opcionadas ?? cero,
+            leads: a?.actividad.leads ?? cero,
+            rentas: a?.volRentaMes ?? cero,
+            ventas: a?.volVentaMes ?? cero,
+          },
+        };
+      }),
+  })),
+  sinEquipo: advisorsFinal.filter((a) => a.activo && !enEquipo.has(a.nombre)).map((a) => a.nombre),
+};
+teams.sinEquipo.forEach((n) => validation.advertencias.push(`Teams: "${n}" está activo pero no pertenece a ningún equipo`));
+
 const dashboard = {
   year: YEAR,
+  teams,
   cohorte,
   leadsCuatrimestre,
   currentMonth, previousMonth,

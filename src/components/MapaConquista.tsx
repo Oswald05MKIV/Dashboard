@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import dashboardJson from '../generated/dashboard.json';
 import type { Advisor, DashboardData } from '../types';
-import type { ColorTeam, IntegranteTeam, Team } from '../data/agosto2026Teams';
+import type { ColorTeam, IntegranteTeam, Team } from '../lib/teams';
 import { META_ANUAL_ASESOR } from '../config';
 import { conversion, fMoney, fNum, fPct, rankOf, safeDiv } from '../lib/metrics';
 import { buscarPorNombre } from '../lib/nombres';
@@ -69,8 +69,8 @@ function statsDe(teams: readonly Team[]): StatsTeam[] {
     const miembros: Miembro[] = team.integrantes.map((fila) => ({
       fila,
       team,
-      advisor: buscarPorNombre(data.advisors, fila.nombre) ?? null,
-      cuatri: leadsCuatrimestreDe(fila.nombre),
+      advisor: (data.advisors.find((x) => x.nombre === fila.canonico) ?? buscarPorNombre(data.advisors, fila.nombre)) ?? null,
+      cuatri: leadsCuatrimestreDe(fila.canonico ?? fila.nombre),
     }));
     const sum = (f: (m: Miembro) => number) => miembros.reduce((acc, m) => acc + f(m), 0);
     const cierres = sum((m) => m.advisor?.totales.cierres ?? 0);

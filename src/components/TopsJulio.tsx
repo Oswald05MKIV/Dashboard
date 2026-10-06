@@ -1,17 +1,15 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import type { RefObject } from 'react';
 import { capturar } from '../lib/captura';
-import { septiembre2026 } from '../data/septiembre2026Tops';
-import type { ClaveTop, TopBloque } from '../data/septiembre2026Tops';
+import dashboardJson from '../generated/dashboard.json';
+import type { DashboardData } from '../types';
+import { MESES_LARGOS } from '../config';
+import { mesPorDefecto, topsDelMes } from '../lib/tops';
+import type { ClaveTop, DatosTops, TopBloque } from '../lib/tops';
 import './tops-teams.css';
 
-const DATOS = septiembre2026;
-
-// El orden y la lista de tarjetas viven en el archivo de datos: si un mes no
-// tiene cierta métrica, basta con sacarla de `orden` y no hay que tocar esto.
-const ORDEN: ClaveTop[] = DATOS.orden.filter((k) => DATOS.tops[k]);
-
-const SUFIJO = DATOS.periodo.toLowerCase().replace(/\s+/g, '-');
+// Los tops se calculan solos desde dashboard.json: no hay archivo que editar a mano.
+const DATA = dashboardJson as unknown as DashboardData;
 
 const mxn = (n: number) =>
   n.toLocaleString('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 });
@@ -80,9 +78,10 @@ export function useAviso() {
   return { aviso, mostrar };
 }
 
-function TarjetaTop({ clave, onAviso }: { clave: ClaveTop; onAviso: (m: string) => void }) {
+function TarjetaTop({ datos, clave, onAviso }: { datos: DatosTops; clave: ClaveTop; onAviso: (m: string) => void }) {
   const ref = useRef<HTMLDivElement>(null);
-  const bloque = DATOS.tops[clave] as TopBloque;
+  const bloque = datos.tops[clave] as TopBloque;
+  const SUFIJO = datos.periodo.toLowerCase().replace(/\s+/g, '-');
   const tope = Math.max(...bloque.items.map((i) => i.valor), 1);
   const empates = new Set(
     bloque.items.filter((i, _, a) => a.filter((x) => x.lugar === i.lugar).length > 1).map((i) => i.lugar)
@@ -133,6 +132,11 @@ function TarjetaTop({ clave, onAviso }: { clave: ClaveTop; onAviso: (m: string) 
 export default function TopsJulio() {
   const ref = useRef<HTMLDivElement>(null);
   const { aviso, mostrar } = useAviso();
+  const meses = DATA.mesesDisponibles.filter((m) => m >= 7).sort((a, b) => b - a);
+  const [mes, setMes] = useState(mesPorDefecto(DATA));
+  const DATOS = useMemo(() => topsDelMes(DATA, mes), [mes]);
+  const ORDEN: ClaveTop[] = DATOS.orden.filter((k) => DATOS.tops[k]);
+  const SUFIJO = DATOS.periodo.toLowerCase().replace(/\s+/g, '-');
 
   return (
     <div className="tt-root" ref={ref}>
@@ -145,12 +149,19 @@ export default function TopsJulio() {
             dentro de {DATOS.mes}. Los montos de renta y venta son el total de la operación, no la comisión.
           </p>
         </div>
-        <BotonCaptura destino={ref} archivo={`tops-${SUFIJO}`} etiqueta="Capturar todo" solido onAviso={mostrar} />
+        <div className="tt-acciones">
+          <select className="tt-cap" value={mes} onChange={(e) => setMes(+e.target.value)} aria-label="Mes">
+            {meses.map((m) => (
+              <option key={m} value={m}>{MESES_LARGOS[m - 1]}{m === DATA.currentMonth ? ' (en curso)' : ''}</option>
+            ))}
+          </select>
+          <BotonCaptura destino={ref} archivo={`tops-${SUFIJO}`} etiqueta="Capturar todo" solido onAviso={mostrar} />
+        </div>
       </header>
 
       <div className="tt-grid">
         {ORDEN.map((k) => (
-          <TarjetaTop key={k} clave={k} onAviso={mostrar} />
+          <TarjetaTop key={`${mes}-${k}`} datos={DATOS} clave={k} onAviso={mostrar} />
         ))}
       </div>
 
