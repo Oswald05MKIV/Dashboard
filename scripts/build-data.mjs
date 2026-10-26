@@ -92,8 +92,32 @@ if (!monthSheets.length) throw new Error(`El archivo OPCIONES no contiene hojas 
 const actividad = {};
 const rosterSet = new Map(); // strip(nombre) -> nombre canónico (con acentos)
 
+const COLUMNAS_POR_HOJA = {
+  "octubre 2026": { recorridos: 5, opciones: 6, leads: 7 },
+};
+
 for (const { name, month } of monthSheets) {
   const ws = wbOpc.Sheets[name];
+  // Columnas por NOMBRE de encabezado (fila 2 de cada hoja): si agregan una
+  // columna nueva (ej. DESARROLLOS en octubre) no se recorren los datos.
+  const enc = (XLSX.utils.sheet_to_json(ws, { header: 1, range: 1, defval: null })[0] ?? []).map((h) => strip(h ?? ""));
+  const col = (re, def) => { const i = enc.findIndex((h) => re.test(h)); return i >= 0 ? i : def; };
+  const C = {
+    opcionadas: col(/^propiedades opcionadas/, 1),
+    renta: col(/^renta$/, 2),
+    venta: col(/^venta$/, 3),
+    leads: col(/^leads/, 4),
+    recorridos: col(/^recorridos/, 5),
+    opciones: col(/opciones mostradas/, 6),
+  };
+  // Hojas donde los encabezados NO coinciden con los datos. OCTUBRE 2026: al insertar
+  // DESARROLLOS se recorrieron los títulos, pero los números siguen en su lugar
+  // (verificado contra RECORRIDOS - REMAX TERRA: 112 recorridos / 189 opciones).
+  const AJUSTE = COLUMNAS_POR_HOJA[strip(name)];
+  if (AJUSTE) {
+    Object.assign(C, AJUSTE);
+    validation.advertencias.push(`${name}: encabezados recorridos respecto a los datos — se leyó recorridos=col ${AJUSTE.recorridos + 1}, opciones=col ${AJUSTE.opciones + 1}, leads=col ${AJUSTE.leads + 1}`);
+  }
   const rows = XLSX.utils.sheet_to_json(ws, { header: 1, range: 2, blankrows: false, defval: null });
   actividad[month] = {};
   for (const r of rows) {
@@ -105,12 +129,12 @@ for (const { name, month } of monthSheets) {
     if (!rosterSet.has(key)) rosterSet.set(key, canon);
     const prev = actividad[month][canon] ?? { recorridos: 0, opciones: 0, opcionadas: 0, opcionadasRenta: 0, opcionadasVenta: 0, leads: 0 };
     actividad[month][canon] = {
-      recorridos: prev.recorridos + num(r[5]),
-      opciones: prev.opciones + num(r[6]),
-      opcionadas: prev.opcionadas + num(r[1]),
-      opcionadasRenta: prev.opcionadasRenta + num(r[2]),
-      opcionadasVenta: prev.opcionadasVenta + num(r[3]),
-      leads: prev.leads + num(r[4]),
+      recorridos: prev.recorridos + num(r[C.recorridos]),
+      opciones: prev.opciones + num(r[C.opciones]),
+      opcionadas: prev.opcionadas + num(r[C.opcionadas]),
+      opcionadasRenta: prev.opcionadasRenta + num(r[C.renta]),
+      opcionadasVenta: prev.opcionadasVenta + num(r[C.venta]),
+      leads: prev.leads + num(r[C.leads]),
     };
   }
 }

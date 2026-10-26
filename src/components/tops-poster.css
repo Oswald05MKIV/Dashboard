@@ -1,0 +1,368 @@
+/* =====================================================================
+   Tops del mes · pósters listos para compartir
+   Prefijo .tp- para no tocar Teams ni el resto del dashboard.
+   Solo se usan efectos que html2canvas sabe pintar (degradados lineales y
+   radiales, sombras, bordes) para que la imagen descargada salga igual.
+   ===================================================================== */
+
+.tp-root {
+  --tp-navy-1: #071634;
+  --tp-navy-2: #0c2453;
+  --tp-navy-3: #123272;
+  --tp-oro-1: #fbe7a1;
+  --tp-oro-2: #e0b23f;
+  --tp-oro-3: #a8761a;
+  --tp-plata-1: #f2f5f9;
+  --tp-plata-2: #b9c3d0;
+  --tp-plata-3: #7d8899;
+  --tp-bronce-1: #f6c79c;
+  --tp-bronce-2: #c98349;
+  --tp-bronce-3: #8a4f24;
+  --tp-display: "Archivo", "Inter", system-ui, sans-serif;
+}
+
+/* Un color por categoría */
+.tp--recorridos { --tp-acento: #4c8dff; --tp-acento-2: #1f5fe0; --tp-glow: rgba(76, 141, 255, 0.38); }
+.tp--mostradas  { --tp-acento: #22c3d6; --tp-acento-2: #0e8fa3; --tp-glow: rgba(34, 195, 214, 0.34); }
+.tp--opcionadas { --tp-acento: #a27bff; --tp-acento-2: #6d43e0; --tp-glow: rgba(162, 123, 255, 0.38); }
+.tp--rentas     { --tp-acento: #2fd39a; --tp-acento-2: #0f9a6a; --tp-glow: rgba(47, 211, 154, 0.32); }
+.tp--ventas     { --tp-acento: #ff4f5e; --tp-acento-2: #dc1c2e; --tp-glow: rgba(255, 79, 94, 0.36); }
+
+/* ---------- rejilla ---------- */
+.tp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr));
+  gap: 18px;
+  align-items: stretch;
+}
+.tp-grid > * { min-width: 0; }
+
+/* ---------- póster ---------- */
+.tp-card {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 20px 16px;
+  border-radius: 20px;
+  color: #fff;
+  background:
+    linear-gradient(90deg, var(--tp-acento-2), var(--tp-acento)) top left / 100% 4px no-repeat,
+    linear-gradient(205deg, var(--tp-glow) 0%, rgba(0, 0, 0, 0) 42%),
+    linear-gradient(160deg, var(--tp-navy-3) 0%, var(--tp-navy-2) 45%, var(--tp-navy-1) 100%);
+  box-shadow: 0 14px 34px rgba(7, 22, 52, 0.28);
+}
+
+
+/* ícono gigante de fondo, como marca de agua */
+.tp-marca {
+  position: absolute;
+  right: 8px;
+  bottom: 64px;
+  width: 170px;
+  height: 170px;
+  color: #fff;
+  opacity: 0.045;
+  pointer-events: none;
+}
+
+.tp-head { position: relative; display: flex; align-items: flex-start; gap: 12px; }
+.tp-head__txt { flex: 1; min-width: 0; }
+.tp-ico {
+  flex: none;
+  width: 42px; height: 42px;
+  display: grid; place-items: center;
+  border-radius: 12px;
+  color: #fff;
+  background: linear-gradient(140deg, var(--tp-acento, #4c8dff), var(--tp-acento-2, #1f5fe0));
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
+}
+.tp-ico svg { width: 21px; height: 21px; }
+.tp-eyebrow {
+  margin: 0 0 3px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--tp-acento, #4c8dff);
+}
+.tp-title {
+  margin: 0;
+  font-family: var(--tp-display);
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+}
+/* el botón de captura sobre fondo oscuro */
+.tp-card .tt-cap {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+.tp-card .tt-cap:hover { background: rgba(255, 255, 255, 0.18); border-color: rgba(255, 255, 255, 0.32); }
+
+/* ---------- 1er lugar ---------- */
+.tp-campeon {
+  position: relative;
+  margin-top: 10px;
+  padding: 26px 16px 18px;
+  border-radius: 16px;
+  text-align: center;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.03) 100%);
+  border: 1px solid rgba(240, 200, 100, 0.45);
+  box-shadow: 0 0 0 4px rgba(224, 178, 63, 0.08), 0 10px 24px rgba(0, 0, 0, 0.22);
+}
+.tp-corona {
+  position: absolute;
+  top: -17px; left: 50%;
+  transform: translateX(-50%);
+  width: 34px; height: 34px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  color: #5a3d06;
+  background: linear-gradient(140deg, var(--tp-oro-1), var(--tp-oro-2) 55%, var(--tp-oro-3));
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35), 0 0 0 3px var(--tp-navy-2);
+}
+.tp-corona svg { width: 18px; height: 18px; }
+.tp-campeon__lugar {
+  margin: 0 0 12px;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--tp-oro-1);
+}
+.tp-campeon__gente { display: flex; justify-content: center; gap: 18px; flex-wrap: wrap; }
+.tp-campeon__p { display: flex; flex-direction: column; align-items: center; min-width: 0; }
+.tp-campeon__nombre {
+  margin: 10px 0 0;
+  font-family: var(--tp-display);
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+}
+.tp-campeon--empate .tp-campeon__nombre { font-size: 16px; }
+.tp-campeon__meta { margin: 3px 0 0; font-size: 11.5px; color: rgba(255, 255, 255, 0.66); }
+.tp-campeon__valor {
+  margin: 12px 0 0;
+  font-family: var(--tp-display);
+  font-size: 40px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.035em;
+  color: var(--tp-oro-1);
+  text-shadow: 0 2px 14px rgba(224, 178, 63, 0.35);
+  font-variant-numeric: tabular-nums;
+}
+.tp-campeon__valor small {
+  margin-left: 7px;
+  font-family: var(--font-body, "Inter", system-ui, sans-serif);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: rgba(255, 255, 255, 0.7);
+  text-shadow: none;
+}
+
+/* ---------- avatar con anillo de medalla ---------- */
+.tp-av {
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  padding: 3px;
+  background: linear-gradient(140deg, #8fa0b8, #4a5b78);
+}
+.tp-av__in {
+  box-sizing: border-box;
+  width: 100%; height: 100%;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  font-family: var(--tp-display);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #fff;
+  background: linear-gradient(150deg, var(--tp-acento, #4c8dff), var(--tp-acento-2, #1f5fe0));
+  border: 2px solid var(--tp-navy-1);
+}
+.tp-av--xl { width: 84px; height: 84px; padding: 4px; }
+.tp-av--xl .tp-av__in { font-size: 28px; }
+.tp-av--md { width: 64px; height: 64px; }
+.tp-av--md .tp-av__in { font-size: 21px; }
+.tp-av--sm { width: 44px; height: 44px; padding: 2.5px; }
+.tp-av--sm .tp-av__in { font-size: 14px; }
+.tp-av--l1 { background: linear-gradient(140deg, var(--tp-oro-1), var(--tp-oro-2) 50%, var(--tp-oro-3)); box-shadow: 0 0 22px rgba(224, 178, 63, 0.45); }
+.tp-av--l2 { background: linear-gradient(140deg, var(--tp-plata-1), var(--tp-plata-2) 50%, var(--tp-plata-3)); }
+.tp-av--l3 { background: linear-gradient(140deg, var(--tp-bronce-1), var(--tp-bronce-2) 50%, var(--tp-bronce-3)); }
+
+/* ---------- 2do y 3er lugar ---------- */
+.tp-podio { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.tp-pos {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.tp-pos__txt { min-width: 0; }
+.tp-pos__lugar {
+  margin: 0;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+}
+.tp-pos--l2 .tp-pos__lugar { color: var(--tp-plata-2); }
+.tp-pos--l3 .tp-pos__lugar { color: var(--tp-bronce-1); }
+.tp-pos__nombre {
+  margin: 1px 0 0;
+  font-family: var(--tp-display);
+  font-size: 15.5px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tp-pos__meta { margin: 1px 0 0; font-size: 10.5px; color: rgba(255, 255, 255, 0.55); }
+.tp-pos__valor {
+  margin: 0;
+  font-family: var(--tp-display);
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.tp-pos__valor small { display: block; font-family: var(--font-body, "Inter", system-ui, sans-serif); font-size: 10px; font-weight: 600; letter-spacing: 0; color: rgba(255, 255, 255, 0.55); text-align: right; }
+.tp-pos__barra {
+  position: absolute;
+  left: 12px; right: 12px; bottom: 6px;
+  height: 3px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+.tp-pos__barra > span { display: block; height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--tp-acento-2), var(--tp-acento)); }
+
+/* ---------- pie del póster ---------- */
+.tp-pie {
+  position: relative;
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, 0.62);
+}
+.tp-pie__total strong { color: #fff; font-weight: 800; font-size: 13px; }
+.tp-pie__marca {
+  flex: none;
+  font-family: var(--tp-display);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #fff;
+}
+.tp-pie__marca i { font-style: normal; color: #ff4f5e; margin: 0 1px; }
+.tp-pie__marca b { font-weight: 600; color: rgba(255, 255, 255, 0.7); margin-left: 2px; }
+.tp-pie__marca--oscura { color: var(--tp-navy-2); }
+.tp-pie__marca--oscura i { color: #dc1c2e; }
+.tp-pie__marca--oscura b { color: #5c6675; }
+
+.tp-vacio {
+  display: grid; place-items: center;
+  min-height: 180px;
+  border-radius: 14px;
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+}
+.tp-vacio--claro { border-color: #d5dce7; color: #5c6675; margin: 16px; }
+
+/* ---------- cuadro de honor (lista completa) ---------- */
+.tp-lista {
+  --tp-acento: #a27bff;
+  --tp-acento-2: #6d43e0;
+  margin-top: 18px;
+  border-radius: 20px;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #e3e8f0;
+  box-shadow: 0 14px 34px rgba(7, 22, 52, 0.08);
+}
+.tp-lista__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 18px 20px;
+  color: #fff;
+  background:
+    linear-gradient(90deg, var(--tp-acento-2), var(--tp-acento)) top left / 100% 4px no-repeat,
+    linear-gradient(205deg, rgba(162, 123, 255, 0.35) 0%, rgba(0, 0, 0, 0) 45%),
+    linear-gradient(160deg, var(--tp-navy-3) 0%, var(--tp-navy-1) 100%);
+}
+.tp-lista__head .tt-cap { background: rgba(255, 255, 255, 0.1); color: #fff; border-color: rgba(255, 255, 255, 0.2); }
+.tp-lista__sub { margin: 4px 0 0; font-size: 12px; color: rgba(255, 255, 255, 0.7); }
+.tp-lista__filas {
+  list-style: none;
+  margin: 0;
+  padding: 14px 16px 6px;
+  columns: 2 340px;
+  column-gap: 22px;
+}
+.tp-fila {
+  break-inside: avoid;
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) 70px 34px;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 6px;
+  border-bottom: 1px solid #eef1f7;
+}
+.tp-fila__lugar {
+  width: 28px; height: 28px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  font-family: var(--tp-display);
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #5c6675;
+  background: #eef1f7;
+}
+.tp-fila--l1 .tp-fila__lugar { color: #5a3d06; background: linear-gradient(140deg, var(--tp-oro-1), var(--tp-oro-2) 55%, var(--tp-oro-3)); }
+.tp-fila--l2 .tp-fila__lugar { color: #2f3a4a; background: linear-gradient(140deg, var(--tp-plata-1), var(--tp-plata-2) 55%, var(--tp-plata-3)); }
+.tp-fila--l3 .tp-fila__lugar { color: #fff; background: linear-gradient(140deg, var(--tp-bronce-1), var(--tp-bronce-2) 55%, var(--tp-bronce-3)); }
+.tp-fila__txt { min-width: 0; display: flex; flex-direction: column; }
+.tp-fila__nombre { font-family: var(--tp-display); font-size: 14px; font-weight: 700; color: #1c2534; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tp-fila--l1 .tp-fila__nombre { font-weight: 800; }
+.tp-fila__meta { font-size: 11px; color: #8b94a3; }
+.tp-fila__barra { height: 6px; border-radius: 4px; background: #eef1f7; overflow: hidden; }
+.tp-fila__barra > span { display: block; height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--tp-acento-2), var(--tp-acento)); }
+.tp-fila__valor { font-family: var(--tp-display); font-size: 17px; font-weight: 800; color: #0c2453; text-align: right; font-variant-numeric: tabular-nums; }
+.tp-lista__pie {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 20px 14px;
+  font-size: 11px; color: #8b94a3;
+}
+
+/* ---------- celular ---------- */
+@media (max-width: 560px) {
+  .tp-card { padding: 18px 16px 14px; border-radius: 18px; }
+  .tp-title { font-size: 19px; }
+  .tp-campeon__valor { font-size: 34px; }
+  .tp-head .tt-cap { padding: 7px 9px; }
+  .tp-fila { grid-template-columns: 28px minmax(0, 1fr) 46px 30px; gap: 8px; }
+}

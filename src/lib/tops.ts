@@ -9,15 +9,22 @@ import type { Advisor, DashboardData } from "../types";
 import { MESES_LARGOS } from "../config";
 
 export type TopItem = { lugar: number; nombre: string; valor: number; ops?: number; detalle?: string };
-export type TopBloque = { titulo: string; unidad: string; moneda?: boolean; nota: string; completo?: boolean; items: TopItem[] };
+export type TopBloque = { titulo: string; unidad: string; moneda?: boolean; nota: string; completo?: boolean; items: TopItem[]; total?: number; totalEtiqueta?: string };
 export type ClaveTop = "recorridos" | "mostradas" | "opcionadas" | "rentas" | "ventas" | "opcionadasTodos";
 export type DatosTops = { periodo: string; mes: string; orden: ClaveTop[]; tops: Partial<Record<ClaveTop, TopBloque>> };
 
 const mxn = (n: number) => n.toLocaleString("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 });
 
 /** Nombre corto para las tarjetas: primer nombre + primer apellido. */
+const PARTICULAS = /^(de|del|la|las|los|y)$/i;
 export function nombreCorto(n: string): string {
   const t = n.split(/\s+/);
+  // "Maria de los Angeles Bostal" → "Angeles Bostal" (no "Maria de")
+  if (t.length >= 3 && PARTICULAS.test(t[1])) {
+    let i = 1;
+    while (i < t.length && PARTICULAS.test(t[i])) i++;
+    return t.slice(i, i + 2).join(" ");
+  }
   if (/^maria$/i.test(t[0].normalize("NFD").replace(/[\u0300-\u036f]/g, "")) && t.length > 3) return `${t[0]} ${t[1]}`;
   if (t.length >= 4) return `${t[0]} ${t[2]}`;
   if (t.length === 3) return `${t[0]} ${t[1]}`;
@@ -91,17 +98,17 @@ export function topsDelMes(data: DashboardData, m: number): DatosTops {
     mes,
     orden: ["recorridos", "mostradas", "opcionadas", "rentas", "ventas", "opcionadasTodos"],
     tops: {
-      recorridos: { titulo: "Más recorridos", unidad: "recorridos", items: rec.items,
+      recorridos: { titulo: "Más recorridos", unidad: "recorridos", total: S.recorridos[i] || 0, totalEtiqueta: "recorridos de la oficina", items: rec.items,
         nota: `Recorridos registrados en ${mes}${enCurso}. La oficina lleva ${S.recorridos[i] || 0}.${rec.extra}` },
-      mostradas: { titulo: "Más opciones mostradas", unidad: "opciones", items: mos.items,
+      mostradas: { titulo: "Más opciones mostradas", unidad: "opciones", total: S.opciones[i] || 0, totalEtiqueta: "opciones mostradas en la oficina", items: mos.items,
         nota: `Opciones mostradas a clientes en ${mes}${enCurso}. La oficina lleva ${S.opciones[i] || 0}.${mos.extra}` },
-      opcionadas: { titulo: "Más propiedades opcionadas", unidad: "propiedades", items: opc.items,
+      opcionadas: { titulo: "Más propiedades opcionadas", unidad: "propiedades", total: S.opcionadas[i] || 0, totalEtiqueta: "propiedades opcionadas en la oficina", items: opc.items,
         nota: `Propiedades captadas / opcionadas en ${mes}${enCurso}. La oficina lleva ${S.opcionadas[i] || 0}.${opc.extra}` },
-      rentas: { titulo: "Acumulado en rentas", unidad: "MXN", moneda: true, items: ren.items,
+      rentas: { titulo: "Acumulado en rentas", unidad: "MXN", moneda: true, total: S.volRenta?.[i] || 0, totalEtiqueta: "en rentas de la oficina", items: ren.items,
         nota: `Suma del total de la operación de las rentas cerradas en ${mes}. Total de la oficina: ${mxn(S.volRenta?.[i] || 0)}.${ren.extra}` },
-      ventas: { titulo: "Acumulado en ventas", unidad: "MXN", moneda: true, items: ven.items,
+      ventas: { titulo: "Acumulado en ventas", unidad: "MXN", moneda: true, total: S.volVenta?.[i] || 0, totalEtiqueta: "en ventas de la oficina", items: ven.items,
         nota: `Suma del total de la operación de las ventas cerradas en ${mes}. Total de la oficina: ${mxn(S.volVenta?.[i] || 0)}.${ven.extra}` },
-      opcionadasTodos: { titulo: `Todos los que opcionaron en ${mes}`, unidad: "propiedades", completo: true, items: opcAll,
+      opcionadasTodos: { titulo: `Todos los que opcionaron en ${mes}`, unidad: "propiedades", completo: true, total: S.opcionadas[i] || 0, totalEtiqueta: "propiedades opcionadas en la oficina", items: opcAll,
         nota: `${opcAll.length} asesores opcionaron al menos una propiedad en ${mes}${enCurso}, de más a menos. Mismo número = mismo lugar.` },
     },
   };
