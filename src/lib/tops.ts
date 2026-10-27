@@ -24,6 +24,8 @@ export type TopItem = {
   leads?: number;
   recorridos?: number;
   etiqueta?: string;
+  venta?: number;
+  renta?: number;
 };
 export type TopBloque = {
   titulo: string;
@@ -38,7 +40,7 @@ export type TopBloque = {
   totalEtiqueta?: string;
 };
 export type ClaveTop = "recorridos" | "mostradas" | "opcionadas" | "rentas" | "ventas";
-export type ClaveLista = "recorridosLeads" | "sinRecorridos" | "noOpcionaron";
+export type ClaveLista = "recorridosLeads" | "sinRecorridos" | "noOpcionaron" | "opcionaron";
 export type DatosTops = {
   periodo: string;
   mes: string;
@@ -87,7 +89,7 @@ export function nombreCorto(n: string): string {
   return n;
 }
 
-type Entrada = { a: Advisor; valor: number; ops?: number; detalle?: string; leads?: number; recorridos?: number; etiqueta?: string };
+type Entrada = { a: Advisor; valor: number; ops?: number; detalle?: string; leads?: number; recorridos?: number; etiqueta?: string; venta?: number; renta?: number };
 
 /** Ranking con empates (1, 1, 3…). Solo valores > 0. */
 function rankear(lista: Entrada[]): TopItem[] {
@@ -101,6 +103,8 @@ function rankear(lista: Entrada[]): TopItem[] {
     leads: x.leads,
     recorridos: x.recorridos,
     etiqueta: x.etiqueta,
+    venta: x.venta,
+    renta: x.renta,
   }));
 }
 
@@ -151,6 +155,8 @@ export function topsDelMes(data: DashboardData, m: number): DatosTops {
     a,
     valor: a.actividad.opcionadas[i] || 0,
     detalle: detalleRV(a.actividad.opcionadasRenta[i] || 0, a.actividad.opcionadasVenta[i] || 0),
+    venta: a.actividad.opcionadasVenta[i] || 0,
+    renta: a.actividad.opcionadasRenta[i] || 0,
   })));
 
   const minR = conMinimos ? MINIMO_RENTAS : 1;
@@ -196,7 +202,7 @@ export function topsDelMes(data: DashboardData, m: number): DatosTops {
       ventas: { titulo: "Ventas cerradas", unidad: "ventas", sinMonto: true, minimo: conMinimos ? MINIMO_VENTAS : undefined, items: podio(ven), total: opsV, totalEtiqueta: `venta${opsV === 1 ? "" : "s"} cerrada${opsV === 1 ? "" : "s"} en la oficina`,
         nota: conMinimos ? `Quienes sumaron al menos $2,000,000 en ventas cerradas en ${mes}.` : `Ventas cerradas en ${mes}.` },
     },
-    listas: { recorridosLeads, sinRecorridos, noOpcionaron },
+    listas: { recorridosLeads, sinRecorridos, noOpcionaron, opcionaron: opc },
     rankingOpciones: mos,
     prueba,
   };

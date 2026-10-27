@@ -6,7 +6,7 @@ import type { DashboardData } from '../types';
 import { MESES_LARGOS } from '../config';
 import { mesPorDefecto, topsDelMes } from '../lib/tops';
 import { MINIMO_RENTAS, MINIMO_VENTAS, lugarEnOpciones } from '../lib/tops';
-import { SlideFelicitacion, SlideMinimo, SlideNoOpcionaron, SlideRecorridosLeads, SlideSinRecorridos, SlideTop } from './Diapositivas';
+import { SlideFelicitacion, SlideMinimo, SlideNoOpcionaron, SlideOpcionaron, SlideRecorridosLeads, SlideSinRecorridos, SlideTop } from './Diapositivas';
 import './tops-teams.css';
 
 // Los tops se calculan solos desde dashboard.json: no hay archivo que editar a mano.
@@ -126,6 +126,7 @@ export default function TopsJulio() {
         </p>
         <div className="sl-rejilla">
           <SlideRecorridosLeads key={`rl-${mes}`} datos={DATOS} onAviso={mostrar} />
+          <SlideOpcionaron key={`op-${mes}`} datos={DATOS} onAviso={mostrar} />
           <SlideSinRecorridos key={`sr-${mes}`} datos={DATOS} onAviso={mostrar} />
           <SlideNoOpcionaron key={`no-${mes}`} datos={DATOS} onAviso={mostrar} />
         </div>

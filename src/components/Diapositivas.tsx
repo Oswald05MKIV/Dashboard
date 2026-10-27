@@ -160,7 +160,7 @@ export function SlideTop({ datos, clave, onAviso }: { datos: DatosTops; clave: C
 /* ------------------------------------------------------------------ */
 /* Listas completas                                                    */
 /* ------------------------------------------------------------------ */
-type Columna = { titulo: string; valor: (it: TopItem) => number; fuerte?: boolean; barra?: boolean; alerta?: boolean };
+type Columna = { titulo: string; valor: (it: TopItem) => number; fuerte?: boolean; barra?: boolean; alerta?: boolean; angosta?: boolean };
 
 function Tabla({ items, columnas, conLugar, max }: { items: TopItem[]; columnas: Columna[]; conLugar?: boolean; max?: number }) {
   const nCols = items.length <= 8 ? 1 : items.length <= 22 ? 2 : 3;
@@ -169,7 +169,7 @@ function Tabla({ items, columnas, conLugar, max }: { items: TopItem[]; columnas:
   const tope = max ?? Math.max(1, ...items.map((it) => columnas.find((c) => c.barra)?.valor(it) ?? 0));
   // Con 2-3 columnas no cabe la barra: se queda solo el número para no cortar nombres.
   const conBarra = nCols === 1;
-  const gridCols = `${conLugar ? '1.9em ' : ''}minmax(0, 1fr) ${columnas.map((c) => (c.barra && conBarra ? '9em' : conBarra ? '5.2em' : '3.6em')).join(' ')}`;
+  const gridCols = `${conLugar ? '1.9em ' : ''}minmax(0, 1fr) ${columnas.map((c) => (c.barra && conBarra ? '9em' : c.angosta ? '2.7em' : conBarra ? '5.2em' : '3.6em')).join(' ')}`;
 
   return (
     <div className={`sl-tabla sl-tabla--c${nCols}${porCol > 9 ? ' sl-tabla--densa' : ''}`}>
@@ -234,6 +234,40 @@ export function SlideRecorridosLeads({ datos, onAviso }: { datos: DatosTops; onA
             { titulo: 'Recorridos', valor: (i) => i.valor, fuerte: true, barra: true },
             { titulo: 'Leads', valor: (i) => i.leads ?? 0 },
           ]} />
+        </div>
+      </div>
+    </Diapositiva>
+  );
+}
+
+export function SlideOpcionaron({ datos, onAviso }: { datos: DatosTops; onAviso: (m: string) => void }) {
+  const items = datos.listas.opcionaron;
+  const total = items.reduce((s, i) => s + i.valor, 0);
+  return (
+    <Diapositiva etiqueta="Todos los que opcionaron" archivo={`todos-los-que-opcionaron-${datos.periodo}`} tema="lista sl--opcionadas" onAviso={onAviso}>
+      <KeyRound className="sl-agua" aria-hidden="true" strokeWidth={1} />
+      <div className="sl-lista">
+        <div className="sl-lista__izq">
+          <span className="sl-ico"><KeyRound aria-hidden="true" strokeWidth={2.2} /></span>
+          <p className="sl-eyebrow">Cuadro de honor · {datos.periodo}</p>
+          <h2 className="sl-h2">Los que opcionaron</h2>
+          <p className="sl-texto">Cada asesor que opcionó al menos una propiedad en {datos.mes}, de más a menos. Mismo número, mismo lugar.</p>
+          <div className="sl-kpis">
+            <p><strong>{items.length}</strong><span>asesores opcionaron</span></p>
+            <p><strong>{num(total)}</strong><span>propiedades opcionadas</span></p>
+          </div>
+          <Marca />
+        </div>
+        <div className="sl-lista__der">
+          {items.length ? (
+            <Tabla items={items} conLugar columnas={[
+              { titulo: 'Opcionadas', valor: (i) => i.valor, fuerte: true, barra: true },
+              { titulo: 'Venta', valor: (i) => i.venta ?? 0, angosta: true },
+              { titulo: 'Renta', valor: (i) => i.renta ?? 0, angosta: true },
+            ]} />
+          ) : (
+            <div className="sl-nadie"><KeyRound aria-hidden="true" /><p className="sl-nadie__t">Sin opcionadas capturadas este mes</p></div>
+          )}
         </div>
       </div>
     </Diapositiva>
