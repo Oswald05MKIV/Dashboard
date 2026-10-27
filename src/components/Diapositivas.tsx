@@ -348,12 +348,13 @@ export function SlideMinimo({ tipo, minimo, onAviso }: { tipo: 'ventas' | 'renta
 }
 
 export function SlideFelicitacion({
-  nombre, periodo, recorridos, lugarRecorridos, opciones, onAviso,
+  nombre, periodo, recorridos, lugarOpciones, opciones, onAviso,
 }: {
   nombre: string;
   periodo: string;
   recorridos: number;
-  lugarRecorridos: number | null;
+  /** Lugar de la oficina en opciones mostradas del mes. */
+  lugarOpciones: number | null;
   opciones: number;
   onAviso: (m: string) => void;
 }) {
@@ -374,14 +375,15 @@ export function SlideFelicitacion({
           <p className="sl-pastilla sl-pastilla--oro">Reconocimiento · {periodo}</p>
           <h2 className="sl-h1">¡Felicidades, {nombre}!</h2>
           <p className="sl-texto sl-texto--grande">
-            {primer} es ejemplo de constancia: sin depender de leads de la oficina, generó su propio movimiento y fue de las más activas
-            en recorridos del mes. Su trabajo ya la llevó a mostrar propiedades en <strong>Campanario</strong>.
+            {primer} es ejemplo de constancia: sin depender de leads de la oficina, salió a <strong>{recorridos} recorridos</strong> y
+            mostró <strong>{opciones} opciones</strong> a sus clientes{lugarOpciones ? <>, el <strong>{lugarOpciones}° lugar de toda la oficina</strong></> : ''}.
+            Su trabajo ya la llevó a mostrar propiedades en <strong>Campanario</strong>.
           </p>
           <p className="sl-texto">Así se construye una carrera en bienes raíces: saliendo a la calle todos los días. ¡Gracias, {primer}!</p>
           <div className="sl-stats">
             <p><strong>{recorridos}</strong><span>recorridos en el mes</span></p>
-            {lugarRecorridos && <p><strong>{lugarRecorridos}°</strong><span>lugar en recorridos de la oficina</span></p>}
             <p><strong>{opciones}</strong><span>opciones mostradas</span></p>
+            {lugarOpciones && <p><strong>{lugarOpciones}°</strong><span>lugar de la oficina en opciones mostradas</span></p>}
           </div>
           <Marca />
         </div>

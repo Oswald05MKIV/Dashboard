@@ -5,7 +5,7 @@ import dashboardJson from '../generated/dashboard.json';
 import type { DashboardData } from '../types';
 import { MESES_LARGOS } from '../config';
 import { mesPorDefecto, topsDelMes } from '../lib/tops';
-import { MINIMO_RENTAS, MINIMO_VENTAS } from '../lib/tops';
+import { MINIMO_RENTAS, MINIMO_VENTAS, lugarEnOpciones } from '../lib/tops';
 import { SlideFelicitacion, SlideMinimo, SlideNoOpcionaron, SlideRecorridosLeads, SlideSinRecorridos, SlideTop } from './Diapositivas';
 import './tops-teams.css';
 
@@ -86,7 +86,8 @@ export default function TopsJulio() {
   // Reconocimiento: Daniela Morales (oct 2026)
   const dani = DATA.advisors.find((a) => /^daniela morales/i.test(a.nombre));
   const i = mes - 1;
-  const lugarDani = dani ? DATOS.listas.recorridosLeads.find((x) => x.nombre === 'Daniela Morales')?.lugar ?? null : null;
+  // Lugar en opciones mostradas (con empates), sin Verónica ni el coordinador.
+  const lugarDani = dani ? lugarEnOpciones(DATOS, 'Daniela Morales') : null;
 
   return (
     <div className="tt-root tp-root">
@@ -141,7 +142,7 @@ export default function TopsJulio() {
               nombre="Daniela Morales"
               periodo={DATOS.periodo}
               recorridos={dani.actividad.recorridos[i] || 0}
-              lugarRecorridos={lugarDani}
+              lugarOpciones={lugarDani}
               opciones={dani.actividad.opciones[i] || 0}
               onAviso={mostrar}
             />

@@ -46,6 +46,8 @@ export type DatosTops = {
   orden: ClaveTop[];
   tops: Partial<Record<ClaveTop, TopBloque>>;
   listas: Record<ClaveLista, TopItem[]>;
+  /** Ranking completo de opciones mostradas (para reconocimientos). */
+  rankingOpciones: TopItem[];
   /** Asesores en periodo de prueba que se muestran aparte en las listas. */
   prueba: TopItem[];
 };
@@ -195,6 +197,12 @@ export function topsDelMes(data: DashboardData, m: number): DatosTops {
         nota: conMinimos ? `Quienes sumaron al menos $2,000,000 en ventas cerradas en ${mes}.` : `Ventas cerradas en ${mes}.` },
     },
     listas: { recorridosLeads, sinRecorridos, noOpcionaron },
+    rankingOpciones: mos,
     prueba,
   };
+}
+
+/** Lugar de un asesor (por nombre corto) en opciones mostradas del mes, o null. */
+export function lugarEnOpciones(d: DatosTops, nombre: string): number | null {
+  return d.rankingOpciones.find((x) => x.nombre === nombre)?.lugar ?? null;
 }
