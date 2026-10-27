@@ -75,6 +75,10 @@ export interface Advisor {
   metaAntiguedad: number | null;
   tarifaMesActual: number;
   metaAnio: number;
+  /** Marca de color del asesor en la hoja del mes de OPCIONES (naranja = no opcionó, verde = situación personal). */
+  marcaMes?: ("naranja" | "verde" | null)[];
+  /** Si el asesor aparece en la hoja de ese mes de OPCIONES. */
+  enHojaMes?: boolean[];
   actividad: {
     recorridos: number[];
     opciones: number[];
@@ -165,6 +169,8 @@ export interface DashboardData {
       comAsesor: number[];
       volRenta: number[];
       volVenta: number[];
+      opsRenta?: number[];
+      opsVenta?: number[];
       opcionadasRenta: number[];
       opcionadasVenta: number[];
     };

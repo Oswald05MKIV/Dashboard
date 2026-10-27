@@ -1,5 +1,5 @@
 {
-  "generadoEl": "2026-10-26T23:16:46.507Z",
+  "generadoEl": "2026-10-27T06:12:18.952Z",
   "archivos": {
     "opciones": "OPCIONES.xlsx",
     "apartado": "APARTADO.xlsx",
@@ -15,6 +15,9 @@
   ],
   "fechasCorregidas": [
     "Opcionadas de Noel Castro en agosto: 0 → 1 (opcionó una propiedad (venta) en agosto; no viene en la hoja AGOSTO 2026)",
+    "Cierre agregado desde el CSV del portal: Pilar González Ávila, venta $1,950,000 (20/8/2026) — no viene en APARTADO",
+    "Cierre agregado desde el CSV del portal: Erik Trotter Bustamante, renta $18,000 (27/8/2026) — no viene en APARTADO",
+    "Cierre agregado desde el CSV del portal: Christian Alvarado Martínez, renta $12,000 (2/10/2026) — no viene en APARTADO",
     "Fecha de ingreso de Angel Gabriel Martinez: capturada a mano 2026-08-07 (ingreso 7 ago 2026, no viene en membresías)",
     "Fecha Sir de Christian Díaz Padilla: corregida a 2025-03 (el archivo indica 2024; ingreso real 2025)"
   ],
@@ -184,7 +187,6 @@
     "Fila 185: se acreditó a \"Christian Díaz Padilla\" como ASESOR 2 de la oficina ($20,625)"
   ],
   "advertencias": [
-    "OCTUBRE 2026: encabezados recorridos respecto a los datos — se leyó recorridos=col 6, opciones=col 7, leads=col 8",
     "Operaciones compartidas con un asesor de la oficina en ASESOR 2: 16 créditos generados",
     "No se encontró CAPACITACION.xlsx en /data — el índice de los escuderos usa opcionadas y la estimación provisional",
     "Asesor dado de baja: \"Adriana Cedillo\" — fuera del dashboard",

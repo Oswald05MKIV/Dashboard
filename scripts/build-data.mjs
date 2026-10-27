@@ -77,7 +77,7 @@ const validation = { generadoEl: new Date().toISOString(), archivos: { opciones:
 /* 1) OPCIONES — hojas mensuales "<MES> 2026"                          */
 /*    A=Asesor B=Propiedades opcionadas E=Leads F=Recorridos G=Opciones */
 /* ------------------------------------------------------------------ */
-const wbOpc = XLSX.read(readFileSync(OPCIONES_PATH), { cellDates: true });
+const wbOpc = XLSX.read(readFileSync(OPCIONES_PATH), { cellDates: true, cellStyles: true });
 const monthSheets = wbOpc.SheetNames
   .map((name) => {
     const m = strip(name).match(/^([a-z]+)\s+(\d{4})$/);
@@ -92,9 +92,19 @@ if (!monthSheets.length) throw new Error(`El archivo OPCIONES no contiene hojas 
 const actividad = {};
 const rosterSet = new Map(); // strip(nombre) -> nombre canónico (con acentos)
 
-const COLUMNAS_POR_HOJA = {
-  "octubre 2026": { recorridos: 5, opciones: 6, leads: 7 },
-};
+// Ajustes manuales por hoja si los encabezados no coinciden con los datos.
+// (OCTUBRE 2026 ya quedó corregido en el archivo: se lee por encabezado.)
+const COLUMNAS_POR_HOJA = {};
+
+/** Traduce el relleno de la celda del asesor a una marca: naranja | verde | null. */
+function marcaDeColor(rgb) {
+  if (!rgb || rgb.length < 6) return null;
+  const h = rgb.slice(-6);
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16));
+  if (r > 200 && g > 90 && g < 200 && b < 90) return "naranja";
+  if (g > r + 6 && g >= b - 8 && !(r > 240 && g > 240 && b > 240)) return "verde";
+  return null;
+}
 
 for (const { name, month } of monthSheets) {
   const ws = wbOpc.Sheets[name];
@@ -118,6 +128,14 @@ for (const { name, month } of monthSheets) {
     Object.assign(C, AJUSTE);
     validation.advertencias.push(`${name}: encabezados recorridos respecto a los datos — se leyó recorridos=col ${AJUSTE.recorridos + 1}, opciones=col ${AJUSTE.opciones + 1}, leads=col ${AJUSTE.leads + 1}`);
   }
+  // Color con que está marcado cada asesor en la columna A (naranja = no opcionó,
+  // verde = situación personal). Se guarda por mes para las imágenes de Tops.
+  const colorFila = new Map();
+  for (let R = 3; R <= 200; R++) {
+    const c = ws[`A${R}`];
+    if (!c || c.v == null) continue;
+    colorFila.set(strip(c.v), c.s?.fgColor?.rgb ?? null);
+  }
   const rows = XLSX.utils.sheet_to_json(ws, { header: 1, range: 2, blankrows: false, defval: null });
   actividad[month] = {};
   for (const r of rows) {
@@ -129,6 +147,7 @@ for (const { name, month } of monthSheets) {
     if (!rosterSet.has(key)) rosterSet.set(key, canon);
     const prev = actividad[month][canon] ?? { recorridos: 0, opciones: 0, opcionadas: 0, opcionadasRenta: 0, opcionadasVenta: 0, leads: 0 };
     actividad[month][canon] = {
+      marca: marcaDeColor(colorFila.get(key)),
       recorridos: prev.recorridos + num(r[C.recorridos]),
       opciones: prev.opciones + num(r[C.opciones]),
       opcionadas: prev.opcionadas + num(r[C.opcionadas]),
@@ -305,6 +324,27 @@ rawOps.forEach((r, i) => {
   });
 });
 
+/* Cierres que vienen en el reporte del portal RE/MAX (CSV) pero no en APARTADO.
+   Se agregan solos; si después se capturan en APARTADO (mismo asesor, tipo, monto
+   y mes de cierre) se ignoran para no contarlos dos veces. */
+const CIERRES_PORTAL = [
+  { fecha: [2026, 8, 20], asesor: "Pilar González Ávila", tipo: "VENTA", monto: 1950000, comTotal: 19500, comOficina: 1950, comAsesor: 7800, propiedad: "Venta reportada en portal (ID 84032)" },
+  { fecha: [2026, 8, 27], asesor: "Erik Trotter Bustamante", tipo: "RENTA", monto: 18000, comTotal: 18000, comOficina: 5400, comAsesor: 12600, propiedad: "Renta RCR677325-495 (portal ID 83931)" },
+  { fecha: [2026, 10, 2], asesor: "Christian Alvarado Martínez", tipo: "RENTA", monto: 12000, comTotal: 12000, comOficina: 3000, comAsesor: 3000, propiedad: "Renta RCR689830-495 (portal ID 85254)" },
+];
+for (const c of CIERRES_PORTAL) {
+  const canon = resolveAdvisor(c.asesor) ?? c.asesor;
+  const [y, m, d] = c.fecha;
+  const ya = ops.some((o) => o.estatus === "CERRADA" && strip(o.asesor) === strip(canon) && o.tipo === c.tipo && o.montoOperacion === c.monto && o.cierreY === y && o.cierreM === m);
+  if (ya) continue;
+  ops.push({
+    fila: "CSV portal", asesor: canon, asesor2Raw: null, comTotal: c.comTotal, esCredito2: false, tipo: c.tipo,
+    montoOperacion: c.monto, propiedad: c.propiedad, comOficina: c.comOficina, comAsesor: c.comAsesor,
+    estatus: "CERRADA", pagado: "SI", cierreDirecto: true, apartadoY: null, apartadoM: null, cierreY: y, cierreM: m, cierreD: d,
+  });
+  validation.fechasCorregidas.push(`Cierre agregado desde el CSV del portal: ${canon}, ${c.tipo.toLowerCase()} $${c.monto.toLocaleString()} (${d}/${m}/${y}) — no viene en APARTADO`);
+}
+
 /* Deduplicación (dos pasadas): misma fecha de apartado + asesor + propiedad + comisiones.
    Se conserva la fila más completa: fecha de operación directa > pagado SI > primera. */
 const score = (o) => (o.cierreDirecto ? 2 : 0) + (o.pagado === "SI" ? 1 : 0);
@@ -382,6 +422,7 @@ for (const o of ops) {
   validation.nombresNormalizados.push(`Fila ${o.fila}: se acreditó a "${a2}" como ASESOR 2 de la oficina ($${residual.toLocaleString()})`);
 }
 ops.push(...creditos);
+if (process.env.DUMP_OPS) writeFileSync(process.env.DUMP_OPS, JSON.stringify(ops, null, 1));
 validation.advertencias.push(`Operaciones compartidas con un asesor de la oficina en ASESOR 2: ${creditos.length} créditos generados`);
 
 /* ------------------------------------------------------------------ */
@@ -687,6 +728,8 @@ ops.forEach((o) => { if (o.asesor) advisorNames.add(o.asesor); });
 const emptyMonths = () => Array.from({ length: 12 }, () => 0);
 
 const advisors = [...advisorNames].sort((a, b) => strip(a).localeCompare(strip(b))).map((name) => {
+  const marcaMes = Array.from({ length: 12 }, () => null);
+  const enHojaMes = Array.from({ length: 12 }, () => false);
   const act = { recorridos: emptyMonths(), opciones: emptyMonths(), opcionadas: emptyMonths(), opcionadasRenta: emptyMonths(), opcionadasVenta: emptyMonths(), leads: emptyMonths() };
   for (const [m, byAdv] of Object.entries(actividad)) {
     const row = byAdv[name];
@@ -694,6 +737,8 @@ const advisors = [...advisorNames].sort((a, b) => strip(a).localeCompare(strip(b
       act.recorridos[m - 1] = row.recorridos; act.opciones[m - 1] = row.opciones;
       act.opcionadas[m - 1] = row.opcionadas; act.opcionadasRenta[m - 1] = row.opcionadasRenta;
       act.opcionadasVenta[m - 1] = row.opcionadasVenta; act.leads[m - 1] = row.leads;
+      marcaMes[m - 1] = row.marca ?? null;
+      enHojaMes[m - 1] = true;
     }
   }
   const myOps = ops.filter((o) => o.asesor === name);
@@ -754,6 +799,7 @@ const advisors = [...advisorNames].sort((a, b) => strip(a).localeCompare(strip(b
     tarifaMesActual,       // aporte mensual del mes en curso
     metaAnio: META_ANIO,   // meta individual $360,000 (X+Y), año calendario
     actividad: act,
+    marcaMes, enHojaMes,
     cierresMes, apartadosMes, comOficinaMes, comAsesorMes, cierresPropiosMes,
     comOperacionMes,       // comisión total completa de la operación (metas 500K / 1M)
     capacitacion: capacitacionDe(name),
@@ -825,6 +871,8 @@ const totals = {
     comAsesor: sumMonths((a) => a.comAsesorMes),
     volRenta: sumMonths((a) => a.volRentaMes),
     volVenta: sumMonths((a) => a.volVentaMes),
+    opsRenta: sumMonths((a) => a.opsRentaMes),
+    opsVenta: sumMonths((a) => a.opsVentaMes),
     opcionadasRenta: sumMonths((a) => a.actividad.opcionadasRenta),
     opcionadasVenta: sumMonths((a) => a.actividad.opcionadasVenta),
   },

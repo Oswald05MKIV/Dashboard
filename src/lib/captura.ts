@@ -91,7 +91,10 @@ function incrustarFuentes(doc: Document, fuentes: FuenteSvg[]) {
   });
 }
 
-export async function capturar(nodo: HTMLElement | null, archivo: string): Promise<string> {
+/** Opciones de captura. `ancho`: imagen exacta de ese ancho (p. ej. 1920 para 16:9 Full HD), sin marco blanco. */
+export type OpcionesCaptura = { ancho?: number };
+
+export async function capturar(nodo: HTMLElement | null, archivo: string, opciones: OpcionesCaptura = {}): Promise<string> {
   if (!nodo) throw new Error('No encontré la sección a capturar');
   const html2canvas = await cargarHtml2Canvas();
   // Esperar las tipografías (Cinzel / EB Garamond, Inter…) para que la imagen
@@ -104,8 +107,8 @@ export async function capturar(nodo: HTMLElement | null, archivo: string): Promi
     setTimeout(() => r(null), 60); // si la pestaña está oculta no hay cuadros
   });
 
-  const escala = Math.min(2, window.devicePixelRatio || 1) * 1.5;
   const caja = nodo.getBoundingClientRect();
+  const escala = opciones.ancho ? opciones.ancho / caja.width : Math.min(2, window.devicePixelRatio || 1) * 1.5;
 
   const bruto: HTMLCanvasElement = await html2canvas(nodo, {
     backgroundColor: '#ffffff',
@@ -113,8 +116,8 @@ export async function capturar(nodo: HTMLElement | null, archivo: string): Promi
     useCORS: true,
     logging: false,
     // Tomar el tamaño real del contenido, no solo lo que se ve en pantalla.
-    width: Math.ceil(Math.max(nodo.scrollWidth, caja.width)),
-    height: Math.ceil(Math.max(nodo.scrollHeight, caja.height)),
+    width: opciones.ancho ? caja.width : Math.ceil(Math.max(nodo.scrollWidth, caja.width)),
+    height: opciones.ancho ? caja.height : Math.ceil(Math.max(nodo.scrollHeight, caja.height)),
     // Sin esto la imagen sale desfasada cuando la página está scrolleada.
     scrollX: -window.scrollX,
     scrollY: -window.scrollY,
@@ -123,16 +126,23 @@ export async function capturar(nodo: HTMLElement | null, archivo: string): Promi
     onclone: (doc: Document) => incrustarFuentes(doc, cssFuentes),
   });
 
-  // Marco blanco: se dibuja el resultado sobre un lienzo un poco más grande.
-  const m = Math.round(MARGEN * escala);
   const canvas = document.createElement('canvas');
-  canvas.width = bruto.width + m * 2;
-  canvas.height = bruto.height + m * 2;
   const ctx = canvas.getContext('2d');
-  if (ctx) {
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(bruto, m, m);
+  if (opciones.ancho) {
+    // Tamaño exacto (p. ej. 1920×1080): sin marco, se ajusta al píxel.
+    canvas.width = opciones.ancho;
+    canvas.height = Math.round((opciones.ancho * caja.height) / caja.width);
+    if (ctx) ctx.drawImage(bruto, 0, 0, canvas.width, canvas.height);
+  } else {
+    // Marco blanco: se dibuja el resultado sobre un lienzo un poco más grande.
+    const m = Math.round(MARGEN * escala);
+    canvas.width = bruto.width + m * 2;
+    canvas.height = bruto.height + m * 2;
+    if (ctx) {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(bruto, m, m);
+    }
   }
 
   const blob = await new Promise<Blob>((res, rej) =>

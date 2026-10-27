@@ -5,6 +5,9 @@ import { MESES_CORTOS, MESES_LARGOS } from "../config";
 import { fMoney, fNum } from "../lib/metrics";
 import { Card, Kpi, MonthChip, PageHead } from "../components/ui";
 import { ComparativoMensual } from "../components/charts";
+import { SlideAcumulado } from "../components/Diapositivas";
+import { useAviso } from "../components/TopsJulio";
+import "../components/tops-teams.css";
 
 type FiltroPago = "TODOS" | "SI" | "PENDIENTE";
 
@@ -32,6 +35,15 @@ export function Operaciones({ data }: { data: DashboardData }) {
       .sort((x, y) => y.mes - x.mes || y.comOficina + y.comAsesor - (x.comOficina + x.comAsesor));
   }, [data, q, pago, mes]);
 
+  const { aviso, mostrar } = useAviso();
+  // "Hasta hoy": fecha en que se generaron los datos, en hora de Querétaro.
+  const hoy = useMemo(() => {
+    const p = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Mexico_City", year: "numeric", month: "numeric", day: "numeric" })
+      .formatToParts(new Date(data.generadoEl));
+    const v = (t: string) => Number(p.find((x) => x.type === t)?.value);
+    return v("year") === data.year ? { mes: v("month"), dia: v("day") } : { mes: 12, dia: 31 };
+  }, [data]);
+
   const comFiltrada = cierres.reduce((s, o) => s + o.comOficina + o.comAsesor, 0);
 
   return (
@@ -47,6 +59,15 @@ export function Operaciones({ data }: { data: DashboardData }) {
         <Kpi label="Cierres del año" value={fNum(data.totals.cierres)} icon={<CheckCircle2 size={16} />} />
         <Kpi label="Operaciones pendientes" value={fNum(data.totals.pendientes)} icon={<Clock size={16} />} sub={<span>Estatus ABIERTA</span>} />
         <Kpi label="Cierres sin pago registrado" value={fNum(data.totals.porCobrar)} icon={<Wallet size={16} />} sub={<span>Cerradas no marcadas como pagadas</span>} />
+      </div>
+
+      {/* Acumulado del año: ventas y rentas, cada una capturable en 16:9 */}
+      <div className="section">
+        <div className="sl-rejilla">
+          <SlideAcumulado tipo="ventas" volumen={data.totals.series.volVenta} operaciones={data.totals.series.opsVenta ?? []} hasta={hoy} year={data.year} onAviso={mostrar} />
+          <SlideAcumulado tipo="rentas" volumen={data.totals.series.volRenta} operaciones={data.totals.series.opsRenta ?? []} hasta={hoy} year={data.year} onAviso={mostrar} />
+        </div>
+        {aviso && <div className="tt-toast">{aviso}</div>}
       </div>
 
       {/* Pendientes: sección muy visible */}
