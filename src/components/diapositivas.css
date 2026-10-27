@@ -449,3 +449,55 @@
 .sl-seccion { margin-top: 30px; }
 .sl-seccion__t { margin: 0 0 4px; font-size: 17px; font-weight: 800; letter-spacing: -0.01em; color: #1c2534; }
 .sl-seccion__s { margin: 0 0 14px; font-size: 12.5px; color: #5c6675; }
+
+/* =====================================================================
+   SEMESTRE (2 trimestres, mes por mes)
+   ===================================================================== */
+.sl-sem { position: absolute; inset: 0; display: flex; flex-direction: column; padding: 3cqw 3.4cqw 2.4cqw; gap: 1.8cqw; }
+.sl-sem__head { display: flex; align-items: flex-end; justify-content: space-between; gap: 2cqw; }
+.sl-sem__head .sl-eyebrow { margin-top: 0; }
+.sl-sem__leyenda { display: flex; flex-direction: column; align-items: flex-end; gap: 0.5cqw; font-size: 1.15cqw; color: var(--sl-texto-2); }
+.sl-sem__leyenda span { display: inline-flex; align-items: center; gap: 0.6cqw; }
+.sl-sem__leyenda b { font-family: var(--sl-display); color: var(--sl-oro-1); font-size: 1.4cqw; }
+.sl-sem__dot { display: inline-block; width: 1.6cqw; height: 0.7cqw; border-radius: 1cqw; }
+.sl-sem__dot--rec { background: linear-gradient(90deg, #1f5fe0, #4c8dff); }
+.sl-sem__dot--opc { background: linear-gradient(90deg, #0e8fa3, #3fd6e6); }
+
+.sl-sem__tris { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 1.8cqw; min-height: 0; }
+.sl-tri {
+  display: flex; flex-direction: column;
+  padding: 1.4cqw 1.4cqw 1.2cqw;
+  border-radius: 1.4cqw;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--sl-linea);
+}
+.sl-tri__head { display: flex; align-items: baseline; justify-content: space-between; padding-bottom: 0.9cqw; border-bottom: 1px solid var(--sl-linea); }
+.sl-tri__n { margin: 0; font-family: var(--sl-display); font-size: 1.9cqw; font-weight: 900; letter-spacing: -0.02em; }
+.sl-tri__rango { margin: 0; font-size: 1.15cqw; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--sl-acento); }
+.sl-tri__meses { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 1cqw; padding-top: 1.2cqw; }
+.sl-tri__pie { margin: 1cqw 0 0; font-size: 1.15cqw; color: var(--sl-texto-2); text-align: right; }
+.sl-tri__pie strong { font-family: var(--sl-display); font-size: 1.6cqw; font-weight: 900; color: var(--sl-oro-1); }
+
+.sl-mes {
+  display: flex; flex-direction: column;
+  padding: 1.1cqw 1cqw;
+  border-radius: 1.1cqw;
+  background: rgba(7, 22, 52, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.sl-mes__nombre { margin: 0; font-size: 1.15cqw; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; }
+.sl-mes__nombre em { font-style: normal; font-size: 0.85cqw; letter-spacing: 0.08em; color: var(--sl-acento); margin-left: 0.4cqw; }
+.sl-mes__pct { margin: 0.6cqw 0 0; font-family: var(--sl-display); font-size: 4.4cqw; font-weight: 900; line-height: 1; letter-spacing: -0.04em; color: var(--sl-oro-1); }
+.sl-mes__pct small { font-size: 2.2cqw; margin-left: 0.15cqw; }
+.sl-mes__ratio { margin: 0.4cqw 0 1cqw; font-size: 1cqw; color: var(--sl-texto-2); }
+.sl-mes__fila { margin-top: auto; display: grid; grid-template-columns: 1fr auto; grid-template-areas: "etq num" "barra barra"; align-items: baseline; column-gap: 0.6cqw; row-gap: 0.35cqw; padding-top: 0.7cqw; }
+.sl-mes__fila + .sl-mes__fila { margin-top: 0.5cqw; }
+.sl-mes__etq { grid-area: etq; font-size: 1cqw; color: var(--sl-texto-2); }
+.sl-mes__fila strong { grid-area: num; font-family: var(--sl-display); font-size: 2.1cqw; font-weight: 900; letter-spacing: -0.02em; }
+.sl-mes__barra { grid-area: barra; height: 0.7cqw; border-radius: 1cqw; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+.sl-mes__barra > span { display: block; height: 100%; border-radius: 1cqw; }
+.sl-mes__barra--rec > span { background: linear-gradient(90deg, #1f5fe0, #4c8dff); }
+.sl-mes__barra--opc > span { background: linear-gradient(90deg, #0e8fa3, #3fd6e6); }
+
+.sl-sem__pie { display: flex; align-items: center; justify-content: space-between; gap: 2cqw; font-size: 1.05cqw; color: var(--sl-texto-3); }
+.sl-mes__curso { align-self: flex-start; margin: -0.4cqw 0 0.8cqw; padding: 0.25cqw 0.7cqw; border-radius: 99cqw; font-size: 0.85cqw; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: #0c2453; background: var(--sl-acento); }

@@ -1,4 +1,7 @@
 import { useMemo, useState } from "react";
+import { SlideSemestre } from "../components/Diapositivas";
+import { useAviso } from "../components/TopsJulio";
+import "../components/tops-teams.css";
 import { Building2, Eye, Inbox, Route, Search, Users } from "lucide-react";
 import type { DashboardData } from "../types";
 import { MESES_CORTOS } from "../config";
@@ -11,6 +14,10 @@ export function Actividad({ data }: { data: DashboardData }) {
   const { totals: t, currentMonth: cm, previousMonth: pm } = data;
   const s = t.series;
   const ci = cm - 1;
+  const { aviso, mostrar } = useAviso();
+  // El mes del corte se marca "en curso" si los datos se generaron antes de que terminara.
+  const gen = new Date(data.generadoEl);
+  const enCurso = gen.getFullYear() === data.year && gen.getMonth() + 1 === cm ? cm : undefined;
   const pi = pm ? pm - 1 : null;
 
   const filas = useMemo(() => {
@@ -51,6 +58,12 @@ export function Actividad({ data }: { data: DashboardData }) {
           sub={<span>{fNum(t.opcionadasVenta)} venta · {fNum(t.opcionadasRenta)} renta</span>} />
         <Kpi label="Conversión Lead → Recorrido" value={fPct(conversion(t.leads, t.recorridos))} icon={<Route size={16} />} />
         <Kpi label="Conversión Recorrido → Opción" value={fPct(conversion(t.recorridos, t.opciones))} icon={<Eye size={16} />} />
+      </div>
+
+      {/* Semestre: recorridos vs opciones mostradas por mes (2 trimestres), capturable en 16:9 */}
+      <div className="section">
+        <SlideSemestre recorridos={s.recorridos} opciones={s.opciones} mesFinal={cm} year={data.year} enCurso={enCurso} onAviso={mostrar} />
+        {aviso && <div className="tt-toast">{aviso}</div>}
       </div>
 
       <div className="two-col section">

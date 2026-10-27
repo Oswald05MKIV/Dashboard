@@ -483,3 +483,90 @@ export function SlideAcumulado({
     </Diapositiva>
   );
 }
+
+/* ------------------------------------------------------------------ */
+/* Semestre: recorridos vs opciones mostradas, mes por mes, 2 trimestres */
+/* ------------------------------------------------------------------ */
+const MESES_LARGOS_ES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+export function SlideSemestre({
+  recorridos, opciones, mesFinal, year, enCurso, onAviso,
+}: {
+  recorridos: number[];
+  opciones: number[];
+  /** Último mes del semestre (1-12). */
+  mesFinal: number;
+  year: number;
+  /** Mes que todavía no termina (se marca "en curso"). */
+  enCurso?: number;
+  onAviso: (m: string) => void;
+}) {
+  const inicio = Math.max(1, mesFinal - 5);
+  const meses = Array.from({ length: mesFinal - inicio + 1 }, (_, k) => inicio + k);
+  const trimestres = [meses.slice(0, 3), meses.slice(3, 6)].filter((t) => t.length);
+  const tope = Math.max(1, ...meses.map((m) => Math.max(recorridos[m - 1] || 0, opciones[m - 1] || 0)));
+  const pct = (m: number) => ((recorridos[m - 1] || 0) ? Math.round(((opciones[m - 1] || 0) / recorridos[m - 1]) * 100) : 0);
+  const rango = (t: number[]) => `${MESES_LARGOS_ES[t[0] - 1]} – ${MESES_LARGOS_ES[t[t.length - 1] - 1]}`;
+
+  return (
+    <Diapositiva etiqueta="Semestre · recorridos y opciones" archivo={`semestre-recorridos-opciones-${year}`} tema="semestre sl--azulista" onAviso={onAviso}>
+      <div className="sl-sem">
+        <header className="sl-sem__head">
+          <div>
+            <p className="sl-eyebrow">Último semestre · {MESES_LARGOS_ES[inicio - 1]} – {MESES_LARGOS_ES[mesFinal - 1]} {year}</p>
+            <h2 className="sl-h2">Recorridos y opciones mostradas</h2>
+          </div>
+          <div className="sl-sem__leyenda">
+            <span><i className="sl-sem__dot sl-sem__dot--rec" />Recorridos</span>
+            <span><i className="sl-sem__dot sl-sem__dot--opc" />Opciones mostradas</span>
+            <span><b>%</b> opciones mostradas respecto a los recorridos</span>
+          </div>
+        </header>
+
+        <div className="sl-sem__tris">
+          {trimestres.map((t, k) => {
+            const prom = Math.round(t.reduce((s, m) => s + pct(m), 0) / t.length);
+            return (
+              <section key={k} className="sl-tri">
+                <header className="sl-tri__head">
+                  <p className="sl-tri__n">{k === 0 ? '1er' : '2do'} trimestre</p>
+                  <p className="sl-tri__rango">{rango(t)}</p>
+                </header>
+                <div className="sl-tri__meses">
+                  {t.map((m) => {
+                    const r = recorridos[m - 1] || 0;
+                    const o = opciones[m - 1] || 0;
+                    return (
+                      <div key={m} className="sl-mes">
+                        <p className="sl-mes__nombre">{MESES_LARGOS_ES[m - 1]}</p>
+                        <p className="sl-mes__pct">{pct(m)}<small>%</small></p>
+                        <p className="sl-mes__ratio">{r ? (o / r).toFixed(1) : '0'} opciones por recorrido</p>
+                        {m === enCurso && <p className="sl-mes__curso">Mes en curso</p>}
+                        <div className="sl-mes__fila">
+                          <span className="sl-mes__etq">Recorridos</span>
+                          <span className="sl-mes__barra sl-mes__barra--rec"><span style={{ width: `${(r / tope) * 100}%` }} /></span>
+                          <strong>{r}</strong>
+                        </div>
+                        <div className="sl-mes__fila">
+                          <span className="sl-mes__etq">Opciones</span>
+                          <span className="sl-mes__barra sl-mes__barra--opc"><span style={{ width: `${(o / tope) * 100}%` }} /></span>
+                          <strong>{o}</strong>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <p className="sl-tri__pie">Promedio del trimestre: <strong>{prom}%</strong></p>
+              </section>
+            );
+          })}
+        </div>
+
+        <footer className="sl-sem__pie">
+          <span>Ejemplo: 200% = se mostraron 2 opciones por cada recorrido. Totales de la oficina por mes, no acumulados.</span>
+          <Marca />
+        </footer>
+      </div>
+    </Diapositiva>
+  );
+}
