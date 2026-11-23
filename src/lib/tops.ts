@@ -174,8 +174,11 @@ export function topsDelMes(data: DashboardData, m: number): DatosTops {
     .filter((a) => rec(a) === 0 && marca(a) !== "verde" && !esPrueba(a))
     .map((a) => ({ lugar: 0, nombre: nombreCorto(a.nombre), valor: leads(a), leads: leads(a), recorridos: 0 }))
     .sort((x, y) => y.valor - x.valor || x.nombre.localeCompare(y.nombre));
+  // Si en la hoja del mes nadie está marcado en naranja (p. ej. mes en curso),
+  // la advertencia sale de los datos: 0 opcionadas, sin marca verde.
+  const hayNaranja = act.some((a) => marca(a) === "naranja");
   const noOpcionaron = act
-    .filter((a) => marca(a) === "naranja" && !esPrueba(a))
+    .filter((a) => (hayNaranja ? marca(a) === "naranja" : (a.actividad.opcionadas[i] || 0) === 0 && marca(a) !== "verde") && !esPrueba(a))
     .map((a) => ({ lugar: 0, nombre: nombreCorto(a.nombre), valor: a.actividad.opcionadas[i] || 0, leads: leads(a), recorridos: rec(a) }))
     .sort((x, y) => (y.leads ?? 0) - (x.leads ?? 0) || x.nombre.localeCompare(y.nombre));
   const prueba = act
