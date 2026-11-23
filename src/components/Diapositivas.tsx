@@ -650,28 +650,66 @@ export function SlideLados({
   );
 }
 
-export function SlideEquipo({
-  lados, year, onAviso,
+type ModoRanking = 'equipo' | 'directas' | 'lados';
+const MODOS: Record<ModoRanking, {
+  etiqueta: string; archivo: string; tema: string; titulo: string; dato: string; nota: string;
+  cols: [string, string, string]; vacio: string;
+}> = {
+  equipo: {
+    etiqueta: 'Reconocimiento · trabajo en equipo', archivo: 'reconocimiento-trabajo-en-equipo', tema: 'lista sl--oro',
+    titulo: 'Trabajo en equipo', dato: 'operaciones con un compañero de la oficina',
+    nota: 'Cuenta cada operación cerrada donde lado 1 y lado 2 son dos asesores distintos de RE/MAX Terra. Empates: más ventas, luego mayor volumen.',
+    cols: ['Ops', 'Venta', 'Renta'], vacio: 'Todavía no hay operaciones entre compañeros este año.',
+  },
+  directas: {
+    etiqueta: 'Reconocimiento · operaciones directas', archivo: 'reconocimiento-operaciones-directas', tema: 'lista sl--opcionadas',
+    titulo: 'Operaciones directas', dato: 'operaciones con los 2 lados suyos',
+    nota: 'Cuenta cada operación cerrada donde el mismo asesor llevó comprador y vendedor (o arrendador y arrendatario). Empates: más ventas, luego mayor volumen.',
+    cols: ['Directas', 'Venta', 'Renta'], vacio: 'Todavía no hay operaciones directas este año.',
+  },
+  lados: {
+    etiqueta: 'Reconocimiento · más lados RE/MAX Terra', archivo: 'reconocimiento-mas-lados-terra', tema: 'lista sl--equipo',
+    titulo: 'Más lados RE/MAX Terra', dato: 'lados en operaciones 100% de la oficina',
+    nota: 'Solo operaciones con lado 1 y lado 2 de RE/MAX Terra: con un compañero suma 1 lado a cada quien; una directa suma los 2 lados. Empates: más ventas, luego mayor volumen.',
+    cols: ['Lados', 'Equipo', 'Direc.'], vacio: 'Todavía no hay operaciones 100% Terra este año.',
+  },
+};
+
+export function SlideRankingLados({
+  lados, modo, year, onAviso,
 }: {
   lados: LadosTerra;
+  modo: ModoRanking;
   year: number;
   onAviso: (m: string) => void;
 }) {
-  const ranking = lados.ranking;
-  const primeros = ranking.filter((r) => r.lugar === 1);
+  const M = MODOS[modo];
+  const filas = (modo === 'equipo' ? lados.ranking : modo === 'directas' ? lados.rankingDirectas : lados.rankingLadosTotal).map((r) => {
+    const x = r as typeof lados.rankingLadosTotal[number];
+    const valores: [number, number, number] = modo === 'lados' ? [x.lados, x.equipo, x.directas] : [r.operaciones, r.ventas, r.rentas];
+    const sub = modo === 'equipo'
+      ? `con ${r.socios.map((s) => `${corto(s.nombre).split(' ')[0]}${s.operaciones > 1 ? ` ×${s.operaciones}` : ''}`).join(', ')}`
+      : modo === 'lados'
+        ? ''
+        : `${r.ventas} venta${r.ventas === 1 ? '' : 's'} · ${r.rentas} renta${r.rentas === 1 ? '' : 's'}`;
+    return { lugar: r.lugar, nombre: r.nombre, valores, sub };
+  });
+  const primeros = filas.filter((r) => r.lugar === 1);
   const top = primeros[0];
-  const nCols = ranking.length <= 9 ? 1 : 2;
-  const porCol = Math.ceil(ranking.length / nCols);
-  const bloques = Array.from({ length: nCols }, (_, k) => ranking.slice(k * porCol, (k + 1) * porCol));
-  const tope = Math.max(1, ...ranking.map((r) => r.operaciones));
+  const nCols = filas.length <= 9 ? 1 : 2;
+  const porCol = Math.ceil(filas.length / nCols);
+  const bloques = Array.from({ length: nCols }, (_, k) => filas.slice(k * porCol, (k + 1) * porCol));
+  const tope = Math.max(1, ...filas.map((r) => r.valores[0]));
+  const icono = modo === 'directas' ? KeyRound : Handshake;
+  const Icono = icono;
 
   return (
-    <Diapositiva etiqueta="Reconocimiento · trabajo en equipo" archivo={`reconocimiento-trabajo-en-equipo-${year}`} tema="lista sl--oro" onAviso={onAviso}>
-      <Handshake className="sl-agua" aria-hidden="true" strokeWidth={1} />
+    <Diapositiva etiqueta={M.etiqueta} archivo={`${M.archivo}-${year}`} tema={M.tema} onAviso={onAviso}>
+      <Icono className="sl-agua" aria-hidden="true" strokeWidth={1} />
       <div className="sl-lista sl-lista--equipo">
         <div className="sl-lista__izq">
           <p className="sl-pastilla sl-pastilla--oro">Reconocimiento {year}</p>
-          <h2 className="sl-h2">Trabajo en equipo</h2>
+          <h2 className="sl-h2">{M.titulo}</h2>
           {top ? (
             <div className="sl-ganador">
               <div className="sl-medalla sl-medalla--chica">
@@ -682,16 +720,12 @@ export function SlideEquipo({
               </div>
               <p className="sl-ganador__lugar">1er lugar{primeros.length > 1 ? ' · empate' : ''}</p>
               <p className="sl-ganador__nombre">{primeros.map((p) => corto(p.nombre)).join(' y ')}</p>
-              <p className="sl-ganador__dato">
-                <strong>{top.operaciones}</strong> operaciones con los 2 lados en la oficina
-              </p>
+              <p className="sl-ganador__dato"><strong>{top.valores[0]}</strong> {M.dato}</p>
             </div>
           ) : (
-            <p className="sl-texto">Todavía no hay operaciones entre compañeros este año.</p>
+            <p className="sl-texto">{M.vacio}</p>
           )}
-          <p className="sl-texto sl-texto--chico">
-            Cuenta cada operación cerrada en {year} donde lado 1 y lado 2 son asesores de RE/MAX Terra. Empates: más ventas, luego mayor volumen.
-          </p>
+          <p className="sl-texto sl-texto--chico">{M.nota}</p>
           <Marca />
         </div>
         <div className="sl-lista__der">
@@ -700,24 +734,22 @@ export function SlideEquipo({
               <div key={k} className="sl-tabla__bloque">
                 <div className="sl-fila sl-fila--head sl-fila--eq">
                   <span />
-                  <span>Asesor · con quién</span>
-                  <span className="sl-num">Ops</span>
-                  <span className="sl-num">Venta</span>
-                  <span className="sl-num">Renta</span>
+                  <span>Asesor</span>
+                  {M.cols.map((c) => <span key={c} className="sl-num">{c}</span>)}
                 </div>
                 {bl.map((r) => (
                   <div key={r.nombre} className={`sl-fila sl-fila--eq${r.lugar <= 3 ? ` sl-fila--l${r.lugar}` : ''}`}>
                     <span className="sl-fila__lugar">{r.lugar}</span>
                     <span className="sl-fila__dos">
                       <span className="sl-fila__nombre">{corto(r.nombre)}</span>
-                      <span className="sl-fila__socios">con {r.socios.map((s) => `${corto(s.nombre).split(' ')[0]}${s.operaciones > 1 ? ` ×${s.operaciones}` : ''}`).join(', ')}</span>
+                      {r.sub && <span className="sl-fila__socios">{r.sub}</span>}
                     </span>
                     <span className="sl-num sl-num--fuerte">
-                      {nCols === 1 && <span className="sl-fila__barra"><span style={{ width: `${Math.max(4, (r.operaciones / tope) * 100)}%` }} /></span>}
-                      {r.operaciones}
+                      {nCols === 1 && <span className="sl-fila__barra"><span style={{ width: `${Math.max(4, (r.valores[0] / tope) * 100)}%` }} /></span>}
+                      {r.valores[0]}
                     </span>
-                    <span className="sl-num">{r.ventas || '—'}</span>
-                    <span className="sl-num">{r.rentas || '—'}</span>
+                    <span className="sl-num">{r.valores[1] || '—'}</span>
+                    <span className="sl-num">{r.valores[2] || '—'}</span>
                   </div>
                 ))}
               </div>

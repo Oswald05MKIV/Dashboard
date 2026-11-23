@@ -921,7 +921,7 @@ const mesesVacios = () => Array.from({ length: 12 }, () => 0);
 const ladosSerie = { terra: mesesVacios(), totales: mesesVacios(), equipo: mesesVacios(), directas: mesesVacios(), dobleTerra: mesesVacios() };
 const porAsesorLados = new Map(); // nombre -> {equipo, venta, renta, volumen, socios:Map, directas, meses}
 const regAsesor = (n) => {
-  if (!porAsesorLados.has(n)) porAsesorLados.set(n, { equipo: 0, venta: 0, renta: 0, volumen: 0, socios: new Map(), directas: 0, meses: mesesVacios() });
+  if (!porAsesorLados.has(n)) porAsesorLados.set(n, { equipo: 0, venta: 0, renta: 0, volumen: 0, socios: new Map(), directas: 0, dVenta: 0, dRenta: 0, dVolumen: 0, meses: mesesVacios() });
   return porAsesorLados.get(n);
 };
 const detalleEquipo = [];
@@ -946,7 +946,9 @@ for (const op of opsLados.values()) {
     }
     detalleEquipo.push({ mes: op.mes, dia: op.dia, tipo: op.tipo, monto: op.monto, propiedad: op.propiedad, asesores: [a, b] });
   } else if (directa) {
-    ldDirectas++; ldTipo[op.tipo].directas++; ladosSerie.directas[op.mes - 1]++; regAsesor(gente[0]).directas++;
+    ldDirectas++; ldTipo[op.tipo].directas++; ladosSerie.directas[op.mes - 1]++;
+    const r = regAsesor(gente[0]);
+    r.directas++; r[op.tipo === "VENTA" ? "dVenta" : "dRenta"]++; r.dVolumen += op.monto;
   } else ldExternas++;
 }
 /* Ranking: más operaciones en equipo → más ventas → más volumen. Sin bajas ni Oswaldo. */
@@ -958,6 +960,23 @@ const rankingLados = [...porAsesorLados.entries()]
   .sort((x, y) => y.operaciones - x.operaciones || y.ventas - x.ventas || y.volumen - x.volumen);
 let lugarL = 0, prevL = null;
 rankingLados.forEach((r, i) => { const k = `${r.operaciones}|${r.ventas}`; if (k !== prevL) { lugarL = i + 1; prevL = k; } r.lugar = lugarL; });
+/* Ranking de directas: el mismo asesor llevó los 2 lados. */
+const conLugar = (lista, clave) => {
+  let lugar = 0, prev = null;
+  lista.forEach((r, i) => { const k = clave(r); if (k !== prev) { lugar = i + 1; prev = k; } r.lugar = lugar; });
+  return lista;
+};
+const rankingDirectas = conLugar([...porAsesorLados.entries()]
+  .filter(([n, r]) => r.directas > 0 && visible(n))
+  .map(([n, r]) => ({ nombre: n, operaciones: r.directas, ventas: r.dVenta, rentas: r.dRenta, volumen: r.dVolumen, socios: [] }))
+  .sort((x, y) => y.operaciones - x.operaciones || y.ventas - x.ventas || y.volumen - x.volumen), (r) => `${r.operaciones}|${r.ventas}`);
+/* Ranking de LADOS 100% Terra por asesor: cada operación entre compañeros le
+   da 1 lado a cada uno; cada directa le da los 2 lados al asesor. */
+const rankingLadosTotal = conLugar([...porAsesorLados.entries()]
+  .filter(([n, r]) => r.equipo + r.directas > 0 && visible(n))
+  .map(([n, r]) => ({ nombre: n, lados: r.equipo + 2 * r.directas, equipo: r.equipo, directas: r.directas,
+    operaciones: r.equipo + r.directas, ventas: r.venta + r.dVenta, rentas: r.renta + r.dRenta, volumen: r.volumen + r.dVolumen, socios: [] }))
+  .sort((x, y) => y.lados - x.lados || y.ventas - x.ventas || y.volumen - x.volumen), (r) => `${r.lados}|${r.ventas}`);
 // Cada ficha individual lleva sus operaciones en equipo
 advisorsFinal.forEach((a) => {
   const r = porAsesorLados.get(a.nombre);
@@ -983,6 +1002,8 @@ const ladosTerra = {
   porTipo: ldTipo,
   series: ladosSerie,
   ranking: rankingLados,
+  rankingDirectas,
+  rankingLadosTotal,
   detalle: detalleEquipo.sort((x, y) => x.mes - y.mes || (x.dia ?? 0) - (y.dia ?? 0)),
 };
 

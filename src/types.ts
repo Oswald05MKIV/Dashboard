@@ -140,6 +140,10 @@ export interface LadosTerra {
   porTipo: Record<"VENTA" | "RENTA", { ops: number; lados: number; equipo: number; directas: number }>;
   series: { terra: number[]; totales: number[]; equipo: number[]; directas: number[]; dobleTerra: number[] };
   ranking: LadosRanking[];
+  /** Quién cerró más operaciones directas (los 2 lados suyos). */
+  rankingDirectas: LadosRanking[];
+  /** Quién tiene más lados 100% Terra: 1 por operación con compañero, 2 por directa. */
+  rankingLadosTotal: (LadosRanking & { lados: number; equipo: number; directas: number })[];
   detalle: { mes: number; dia: number | null; tipo: "VENTA" | "RENTA"; monto: number; propiedad: string; asesores: string[] }[];
 }
 

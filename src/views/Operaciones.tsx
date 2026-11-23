@@ -5,7 +5,7 @@ import { MESES_CORTOS, MESES_LARGOS } from "../config";
 import { fMoney, fNum } from "../lib/metrics";
 import { Card, Kpi, MonthChip, PageHead } from "../components/ui";
 import { ComparativoMensual } from "../components/charts";
-import { registrarCortos, SlideAcumulado, SlideEquipo, SlideLados } from "../components/Diapositivas";
+import { registrarCortos, SlideAcumulado, SlideLados, SlideRankingLados } from "../components/Diapositivas";
 import { useAviso } from "../components/TopsJulio";
 import "../components/tops-teams.css";
 
@@ -75,11 +75,13 @@ export function Operaciones({ data }: { data: DashboardData }) {
       <div className="section">
         <h3 className="sl-seccion__t">Lados RE/MAX Terra · trabajo en equipo</h3>
         <p className="sl-seccion__s">
-          Cada operación tiene 2 lados. Aquí se cuentan los lados que se quedaron en la oficina en {data.year} y quién cerró más operaciones con un compañero de RE/MAX Terra.
+          Cada operación tiene 2 lados. Aquí se cuentan los lados que se quedaron en la oficina en {data.year}: quién tiene más lados 100% Terra, quién cerró más operaciones con un compañero y quién tiene más operaciones directas (los 2 lados suyos).
         </p>
         <div className="sl-rejilla">
           <SlideLados lados={data.ladosTerra} hasta={hoy} year={data.year} onAviso={mostrar} />
-          <SlideEquipo lados={data.ladosTerra} year={data.year} onAviso={mostrar} />
+          <SlideRankingLados modo="lados" lados={data.ladosTerra} year={data.year} onAviso={mostrar} />
+          <SlideRankingLados modo="equipo" lados={data.ladosTerra} year={data.year} onAviso={mostrar} />
+          <SlideRankingLados modo="directas" lados={data.ladosTerra} year={data.year} onAviso={mostrar} />
         </div>
       </div>
 

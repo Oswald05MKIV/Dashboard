@@ -535,7 +535,7 @@
 
 .sl-tabla--equipo.sl-tabla--c1 { font-size: 1.7cqw; }
 .sl-tabla--equipo.sl-tabla--c2 { font-size: 1.3cqw; }
-.sl-fila--eq { grid-template-columns: 1.9em minmax(0, 1fr) 2.8em 2.8em 2.8em; padding: 0.42em 0.5em; }
+.sl-fila--eq { grid-template-columns: 1.9em minmax(0, 1fr) 2.8em 3.4em 3.4em; padding: 0.42em 0.5em; }
 .sl-tabla--c1 .sl-fila--eq { grid-template-columns: 1.9em minmax(0, 1fr) 8em 3.4em 3.4em; }
 .sl-fila__dos { display: flex; flex-direction: column; min-width: 0; line-height: 1.15; }
 .sl-fila__socios { font-size: 0.66em; color: var(--sl-texto-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
