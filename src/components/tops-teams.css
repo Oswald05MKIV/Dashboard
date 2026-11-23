@@ -375,3 +375,7 @@
 .tt-mapa .tt-leyenda__name { font-family: "Cinzel", Georgia, "Times New Roman", serif; font-weight: 700; letter-spacing: 0.02em; }
 .tt-mapa .tt-mapa__nota { font-family: "EB Garamond", Georgia, "Times New Roman", serif; font-size: 13px; }
 .tt-capturando .tt-grano { display: none; } /* grano fino fuera de la imagen: pesa mucho y no se nota */
+
+/* Lados RE/MAX Terra por equipo */
+.tt-equipo-lados { margin: 10px 2px 0; font-size: 12px; line-height: 1.4; color: var(--tt-muted, #5c6675); }
+.tt-equipo-lados strong { color: var(--tt-team-ink, #1c2534); font-weight: 800; }

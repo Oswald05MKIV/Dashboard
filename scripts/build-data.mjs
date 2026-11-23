@@ -277,7 +277,7 @@ const wbAp = XLSX.read(readFileSync(APARTADO_PATH), { cellDates: true });
 const wsC = wbAp.Sheets["CIERRES"] ?? wbAp.Sheets[wbAp.SheetNames[0]];
 const rawOps = XLSX.utils.sheet_to_json(wsC, { header: 1, range: 1, blankrows: false, defval: null });
 
-const COL = { fechaApartado: 0, montoApartado: 1, operacion: 2, tipo: 3, asesor1: 8, asesor2: 11, comTotal: 20, propiedad: 22, comOficina: 23, comAsesor: 24, estatus: 25, fechaFirma: 26, fechaOperacion: 27, pagado: 28 };
+const COL = { fechaApartado: 0, montoApartado: 1, operacion: 2, tipo: 3, asesor1: 8, asesor2: 11, modalidad: 18, comTotal: 20, propiedad: 22, comOficina: 23, comAsesor: 24, estatus: 25, fechaFirma: 26, fechaOperacion: 27, pagado: 28 };
 
 let ops = [];
 rawOps.forEach((r, i) => {
@@ -311,6 +311,7 @@ rawOps.forEach((r, i) => {
     fila: rowNum,
     asesor: asesorFinal,
     asesor2Raw: r[COL.asesor2] ?? null,
+    directa: strip(r[COL.modalidad]).startsWith("directa"),
     comTotal: num(r[COL.comTotal]),
     esCredito2: false,
     tipo: strip(r[COL.tipo]) === "renta" ? "RENTA" : "VENTA",
@@ -395,6 +396,9 @@ function asesor2Interno(raw) {
   return null;
 }
 
+/** true si ASESOR 2 trae a alguien (externo u otra oficina), no vacío/guion. */
+const asesor2Externo = (raw) => { const t = strip(raw).replace(/^-+/, "").trim(); return !!t && !["n/a", "na", "none"].includes(t); };
+
 const claveOperacion = (o) => [o.apartadoY, o.apartadoM, strip(o.propiedad).slice(0, 40), o.montoOperacion].join("|");
 // Clave fija de la operación: los créditos de ASESOR 2 la heredan (se crean con
 // ...o), así la regla de comisión total completa reconoce la misma operación.
@@ -405,6 +409,7 @@ const creditos = [];
 for (const o of ops) {
   if (o.estatus !== "CERRADA" && o.estatus !== "ABIERTA") continue;
   const a2 = asesor2Interno(o.asesor2Raw);
+  o.asesor2Terra = a2; // para el acumulado de lados (sección 6.b)
   if (!a2 || strip(a2) === strip(o.asesor)) continue;
   if (yaTieneFila.has(`${claveOperacion(o)}::${strip(a2)}`)) continue; // ya viene en dos filas
   const residual = Math.max(0, +(o.comTotal - o.comOficina - o.comAsesor).toFixed(2));
@@ -893,6 +898,95 @@ cohorte.diferencia = cohorte.realAcumulado - cohorte.esperadoAcumulado;
 cohorte.avancePct = cohorte.esperadoAcumulado > 0 ? (cohorte.realAcumulado / cohorte.esperadoAcumulado) * 100 : 0;
 
 /* ------------------------------------------------------------------ */
+/* 5.b) Acumulado de LADOS — trabajo en equipo                          */
+/*                                                                      */
+/* Toda operación tiene 2 lados (vendedor/arrendador y comprador/       */
+/* arrendatario). Lado 1 = ASESOR 1 (siempre de la oficina). Lado 2 es   */
+/* de RE/MAX Terra cuando ASESOR 2 es un asesor de la oficina (marcado   */
+/* "Remax Terra" o reconocido en el roster) o cuando la operación es     */
+/* DIRECTA (el mismo asesor llevó los dos lados). Las operaciones que    */
+/* vienen en dos filas (una por asesor) se juntan en una sola.           */
+/* Reconocimiento: gana quien más operaciones cerró con OTRO asesor de   */
+/* la oficina (las directas se muestran aparte, no son trabajo en equipo).*/
+/* ------------------------------------------------------------------ */
+const opsLados = new Map();
+for (const o of ops) {
+  if (o.estatus !== "CERRADA" || o.cierreY !== YEAR || o.esCredito2) continue;
+  if (!BAJAS_CUENTAN_EN_TOTALES && esBaja(o.asesor)) continue;
+  const k = o.claveOp ?? claveOperacion(o);
+  if (!opsLados.has(k)) opsLados.set(k, { rows: [], tipo: o.tipo, monto: o.montoOperacion, mes: o.cierreM, dia: o.cierreD, propiedad: o.propiedad });
+  opsLados.get(k).rows.push(o);
+}
+const mesesVacios = () => Array.from({ length: 12 }, () => 0);
+const ladosSerie = { terra: mesesVacios(), totales: mesesVacios(), equipo: mesesVacios(), directas: mesesVacios(), dobleTerra: mesesVacios() };
+const porAsesorLados = new Map(); // nombre -> {equipo, venta, renta, volumen, socios:Map, directas, meses}
+const regAsesor = (n) => {
+  if (!porAsesorLados.has(n)) porAsesorLados.set(n, { equipo: 0, venta: 0, renta: 0, volumen: 0, socios: new Map(), directas: 0, meses: mesesVacios() });
+  return porAsesorLados.get(n);
+};
+const detalleEquipo = [];
+let ldOps = 0, ldEquipo = 0, ldDirectas = 0, ldExternas = 0;
+const ldTipo = { VENTA: { ops: 0, lados: 0, equipo: 0, directas: 0 }, RENTA: { ops: 0, lados: 0, equipo: 0, directas: 0 } };
+for (const op of opsLados.values()) {
+  const gente = [];
+  const meter = (n) => { if (n && !gente.some((g) => strip(g) === strip(n))) gente.push(n); };
+  op.rows.forEach((r) => { meter(r.asesor); meter(r.asesor2Terra); });
+  const directa = gente.length === 1 && op.rows.some((r) => r.directa) && !op.rows.some((r) => r.asesor2Terra === null && asesor2Externo(r.asesor2Raw));
+  const ladosTerra = gente.length >= 2 || directa ? 2 : 1;
+  ldOps++; ldTipo[op.tipo].ops++; ldTipo[op.tipo].lados += ladosTerra;
+  ladosSerie.terra[op.mes - 1] += ladosTerra; ladosSerie.totales[op.mes - 1] += 2;
+  if (ladosTerra === 2) ladosSerie.dobleTerra[op.mes - 1] += 2;
+  if (gente.length >= 2) {
+    ldEquipo++; ldTipo[op.tipo].equipo++; ladosSerie.equipo[op.mes - 1]++;
+    const [a, b] = gente;
+    for (const [yo, otro] of [[a, b], [b, a]]) {
+      const r = regAsesor(yo);
+      r.equipo++; r[op.tipo === "VENTA" ? "venta" : "renta"]++; r.volumen += op.monto; r.meses[op.mes - 1]++;
+      r.socios.set(otro, (r.socios.get(otro) ?? 0) + 1);
+    }
+    detalleEquipo.push({ mes: op.mes, dia: op.dia, tipo: op.tipo, monto: op.monto, propiedad: op.propiedad, asesores: [a, b] });
+  } else if (directa) {
+    ldDirectas++; ldTipo[op.tipo].directas++; ladosSerie.directas[op.mes - 1]++; regAsesor(gente[0]).directas++;
+  } else ldExternas++;
+}
+/* Ranking: más operaciones en equipo → más ventas → más volumen. Sin bajas ni Oswaldo. */
+const visible = (n) => !esBaja(n) && advisorsFinal.some((a) => strip(a.nombre) === strip(n));
+const rankingLados = [...porAsesorLados.entries()]
+  .filter(([n, r]) => r.equipo > 0 && visible(n))
+  .map(([n, r]) => ({ nombre: n, operaciones: r.equipo, ventas: r.venta, rentas: r.renta, volumen: r.volumen,
+    socios: [...r.socios.entries()].sort((x, y) => y[1] - x[1]).map(([s, c]) => ({ nombre: s, operaciones: c })) }))
+  .sort((x, y) => y.operaciones - x.operaciones || y.ventas - x.ventas || y.volumen - x.volumen);
+let lugarL = 0, prevL = null;
+rankingLados.forEach((r, i) => { const k = `${r.operaciones}|${r.ventas}`; if (k !== prevL) { lugarL = i + 1; prevL = k; } r.lugar = lugarL; });
+// Cada ficha individual lleva sus operaciones en equipo
+advisorsFinal.forEach((a) => {
+  const r = porAsesorLados.get(a.nombre);
+  a.ladosEquipo = { operaciones: r?.equipo ?? 0, ventas: r?.venta ?? 0, rentas: r?.renta ?? 0, directas: r?.directas ?? 0, meses: r?.meses ?? mesesVacios(),
+    socios: r ? [...r.socios.entries()].sort((x, y) => y[1] - x[1]).map(([s, c]) => ({ nombre: s, operaciones: c })) : [] };
+});
+// Acumulado de la oficina por operación única: una venta capturada en dos filas
+// (una por asesor, p. ej. Erik/Pilar en Valles) cuenta una sola vez en volumen y operaciones.
+for (const k of ["volVenta", "volRenta", "opsVenta", "opsRenta"]) totals.series[k] = mesesVacios();
+for (const op of opsLados.values()) {
+  const t = op.tipo === "VENTA" ? "Venta" : "Renta";
+  totals.series[`vol${t}`][op.mes - 1] += op.monto;
+  totals.series[`ops${t}`][op.mes - 1]++;
+}
+const ladosTerra = {
+  operaciones: ldOps,
+  ladosTotales: ldOps * 2,
+  ladosTerra: ladosSerie.terra.reduce((x, y) => x + y, 0),
+  ladosDobleTerra: ladosSerie.dobleTerra.reduce((x, y) => x + y, 0), // lado 1 y lado 2 de la oficina
+  operacionesEquipo: ldEquipo,     // lado 1 y lado 2 con asesores distintos de la oficina
+  operacionesDirectas: ldDirectas, // el mismo asesor llevó los dos lados
+  operacionesExternas: ldExternas, // lado 2 con asesor externo u otra oficina
+  porTipo: ldTipo,
+  series: ladosSerie,
+  ranking: rankingLados,
+  detalle: detalleEquipo.sort((x, y) => x.mes - y.mes || (x.dia ?? 0) - (y.dia ?? 0)),
+};
+
+/* ------------------------------------------------------------------ */
 /* 6) Leads — acumulado del último cuatrimestre                        */
 /*    Son los 4 meses COMPLETOS anteriores al mes en curso.            */
 /*    El mes en curso va aparte porque todavía no termina.             */
@@ -996,6 +1090,7 @@ const teams = {
             leads: a?.actividad.leads ?? cero,
             rentas: a?.volRentaMes ?? cero,
             ventas: a?.volVentaMes ?? cero,
+            equipo: a?.ladosEquipo?.meses ?? cero, // operaciones con otro asesor de la oficina
           },
         };
       }),
@@ -1015,6 +1110,7 @@ const dashboard = {
   teams,
   cohorte,
   leadsCuatrimestre,
+  ladosTerra,
   currentMonth, previousMonth,
   mesesDisponibles: [...mesesConDatos].sort((a, b) => a - b),
   generadoEl: new Date().toISOString(),

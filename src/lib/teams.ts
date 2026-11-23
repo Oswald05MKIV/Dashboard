@@ -14,6 +14,8 @@ export type TotalTeam = {
   leads: number;
   rentas: number;
   ventas: number;
+  /** Participaciones en operaciones con otro asesor de la oficina (ambos lados Terra). */
+  equipo: number;
 };
 
 export type IntegranteTeam = TotalTeam & { nombre: string; canonico?: string; sinDatos?: boolean };
@@ -27,7 +29,7 @@ export type Team = {
 
 export type PeriodoTeams = { clave: string; etiqueta: string; desde: number; hasta: number };
 
-const CLAVES: (keyof TotalTeam)[] = ["recorridos", "mostradas", "opcionadas", "leads", "rentas", "ventas"];
+const CLAVES: (keyof TotalTeam)[] = ["recorridos", "mostradas", "opcionadas", "leads", "rentas", "ventas", "equipo"];
 
 /** Acumulado desde el arranque de equipos + cada mes por separado. */
 export function periodosTeams(data: DashboardData): PeriodoTeams[] {
@@ -53,7 +55,7 @@ export function teamsDelPeriodo(data: DashboardData, desde: number, hasta: numbe
   return data.teams.equipos.map((eq) => {
     const integrantes: IntegranteTeam[] = eq.integrantes.map((i) => {
       const fila = { nombre: i.nombre, canonico: i.canonico, sinDatos: i.sinDatos } as IntegranteTeam;
-      for (const k of CLAVES) fila[k] = suma(i.meses[k]);
+      for (const k of CLAVES) fila[k] = suma(i.meses[k] ?? []);
       return fila;
     });
     const total = Object.fromEntries(CLAVES.map((k) => [k, integrantes.reduce((a, x) => a + x[k], 0)])) as TotalTeam;

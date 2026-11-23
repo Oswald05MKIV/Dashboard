@@ -6,11 +6,12 @@
 import { useRef } from 'react';
 import type { ReactNode } from 'react';
 import {
-  AlertTriangle, Building2, Crown, Eye, Footprints, House, KeyRound, Medal, PhoneIncoming, Sparkles, Star, TrendingUp, UserX,
+  AlertTriangle, Building2, Crown, Eye, Footprints, Handshake, House, KeyRound, Medal, PhoneIncoming, Sparkles, Star, TrendingUp, UserX,
 } from 'lucide-react';
 import { BotonCaptura } from './TopsJulio';
 import type { ClaveTop, DatosTops, TopBloque, TopItem } from '../lib/tops';
 import { MESES_CORTOS } from '../config';
+import type { LadosTerra } from '../types';
 import './diapositivas.css';
 
 export const mxn = (n: number) => n.toLocaleString('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 });
@@ -566,6 +567,163 @@ export function SlideSemestre({
           <span>Ejemplo: 200% = se mostraron 2 opciones por cada recorrido. Totales de la oficina por mes, no acumulados.</span>
           <Marca />
         </footer>
+      </div>
+    </Diapositiva>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Lados RE/MAX Terra (Operaciones) — trabajo en equipo                  */
+/* ------------------------------------------------------------------ */
+// Nombre corto: el que se usa en Teams; si no está en un equipo, nombre + primer apellido.
+const CORTOS_EXTRA: Record<string, string> = { 'Alma Veronica Flores Guzman': 'Verónica Flores', 'Consuelo Ramírez': 'Cons Ramírez' };
+let cortosTeams: Record<string, string> = {};
+export const registrarCortos = (equipos: { integrantes: { nombre: string; canonico: string }[] }[]) => {
+  cortosTeams = Object.fromEntries(equipos.flatMap((e) => e.integrantes.map((i) => [i.canonico, i.nombre])));
+};
+const corto = (n: string) => {
+  if (cortosTeams[n]) return cortosTeams[n];
+  if (CORTOS_EXTRA[n]) return CORTOS_EXTRA[n];
+  const p = n.split(/\s+/).filter(Boolean);
+  return p.length <= 2 ? n : `${p[0]} ${p[1]}`;
+};
+
+export function SlideLados({
+  lados, hasta, year, onAviso,
+}: {
+  lados: LadosTerra;
+  hasta: { mes: number; dia: number };
+  year: number;
+  onAviso: (m: string) => void;
+}) {
+  const meses = Array.from({ length: hasta.mes }, (_, k) => k);
+  const equipo = lados.series.equipo;
+  const directas = lados.series.directas;
+  const tope = Math.max(1, ...meses.map((k) => (equipo[k] + directas[k]) * 2));
+  const ops100 = lados.operacionesEquipo + lados.operacionesDirectas;
+  const pctOficina = lados.ladosTotales ? Math.round((lados.ladosTerra / lados.ladosTotales) * 100) : 0;
+  const rango = `1 ene – ${hasta.dia} ${MESES_CORTOS[hasta.mes - 1].toLowerCase()} ${year}`;
+
+  return (
+    <Diapositiva etiqueta={`Acumulado de lados ${year}`} archivo={`acumulado-lados-terra-${year}`} tema="acum sl--equipo" onAviso={onAviso}>
+      <Handshake className="sl-agua" aria-hidden="true" strokeWidth={1} />
+      <div className="sl-acum">
+        <div className="sl-acum__izq">
+          <span className="sl-ico"><Handshake aria-hidden="true" strokeWidth={2.2} /></span>
+          <p className="sl-eyebrow">Acumulado {year} · {rango}</p>
+          <h2 className="sl-h2">Lados 100% RE/MAX Terra</h2>
+          <p className="sl-cifra">{lados.ladosDobleTerra}</p>
+          <p className="sl-cifra__sub">lados en {ops100} operaciones donde lado 1 y lado 2 son de la oficina</p>
+          <div className="sl-stats sl-stats--col">
+            <p><strong>{lados.operacionesEquipo}</strong><span>operaciones entre compañeros · {lados.operacionesEquipo * 2} lados</span></p>
+            <p><strong>{lados.operacionesDirectas}</strong><span>directas, un mismo asesor con los 2 lados · {lados.operacionesDirectas * 2} lados</span></p>
+            <p><strong>{pctOficina}%</strong><span>{lados.ladosTerra} de {lados.ladosTotales} lados de todas las operaciones son nuestros</span></p>
+          </div>
+          <Marca />
+        </div>
+        <div className="sl-acum__der">
+          <div className="sl-barras sl-barras--lados">
+            {meses.map((k) => {
+              const e = equipo[k] * 2;
+              const d = directas[k] * 2;
+              return (
+                <div key={k} className="sl-barra">
+                  <span className="sl-barra__val">{e + d || '—'}</span>
+                  <span className="sl-barra__col sl-barra__col--pila">
+                    <span className="sl-pila sl-pila--dir" style={{ height: `${(d / tope) * 100}%` }} />
+                    <span className="sl-pila sl-pila--eq" style={{ height: `${(e / tope) * 100}%` }} />
+                  </span>
+                  <span className="sl-barra__ops">{equipo[k]} en equipo</span>
+                  <span className="sl-barra__mes">{MESES_CORTOS[k]}</span>
+                </div>
+              );
+            })}
+          </div>
+          <p className="sl-leyenda-lados">
+            <span><i className="sl-pila sl-pila--eq" />Entre compañeros de la oficina</span>
+            <span><i className="sl-pila sl-pila--dir" />Directas (mismo asesor)</span>
+            <span>Número arriba = lados 100% Terra del mes</span>
+          </p>
+        </div>
+      </div>
+    </Diapositiva>
+  );
+}
+
+export function SlideEquipo({
+  lados, year, onAviso,
+}: {
+  lados: LadosTerra;
+  year: number;
+  onAviso: (m: string) => void;
+}) {
+  const ranking = lados.ranking;
+  const primeros = ranking.filter((r) => r.lugar === 1);
+  const top = primeros[0];
+  const nCols = ranking.length <= 9 ? 1 : 2;
+  const porCol = Math.ceil(ranking.length / nCols);
+  const bloques = Array.from({ length: nCols }, (_, k) => ranking.slice(k * porCol, (k + 1) * porCol));
+  const tope = Math.max(1, ...ranking.map((r) => r.operaciones));
+
+  return (
+    <Diapositiva etiqueta="Reconocimiento · trabajo en equipo" archivo={`reconocimiento-trabajo-en-equipo-${year}`} tema="lista sl--oro" onAviso={onAviso}>
+      <Handshake className="sl-agua" aria-hidden="true" strokeWidth={1} />
+      <div className="sl-lista sl-lista--equipo">
+        <div className="sl-lista__izq">
+          <p className="sl-pastilla sl-pastilla--oro">Reconocimiento {year}</p>
+          <h2 className="sl-h2">Trabajo en equipo</h2>
+          {top ? (
+            <div className="sl-ganador">
+              <div className="sl-medalla sl-medalla--chica">
+                <span className="sl-medalla__cinta sl-medalla__cinta--i" />
+                <span className="sl-medalla__cinta sl-medalla__cinta--d" />
+                <Avatar nombre={top.nombre} lugar={1} className="sl-av--hero" />
+                <span className="sl-medalla__estrella"><Star aria-hidden="true" strokeWidth={2} /></span>
+              </div>
+              <p className="sl-ganador__lugar">1er lugar{primeros.length > 1 ? ' · empate' : ''}</p>
+              <p className="sl-ganador__nombre">{primeros.map((p) => corto(p.nombre)).join(' y ')}</p>
+              <p className="sl-ganador__dato">
+                <strong>{top.operaciones}</strong> operaciones con los 2 lados en la oficina
+              </p>
+            </div>
+          ) : (
+            <p className="sl-texto">Todavía no hay operaciones entre compañeros este año.</p>
+          )}
+          <p className="sl-texto sl-texto--chico">
+            Cuenta cada operación cerrada en {year} donde lado 1 y lado 2 son asesores de RE/MAX Terra. Empates: más ventas, luego mayor volumen.
+          </p>
+          <Marca />
+        </div>
+        <div className="sl-lista__der">
+          <div className={`sl-tabla sl-tabla--c${nCols} sl-tabla--equipo`}>
+            {bloques.map((bl, k) => (
+              <div key={k} className="sl-tabla__bloque">
+                <div className="sl-fila sl-fila--head sl-fila--eq">
+                  <span />
+                  <span>Asesor · con quién</span>
+                  <span className="sl-num">Ops</span>
+                  <span className="sl-num">Venta</span>
+                  <span className="sl-num">Renta</span>
+                </div>
+                {bl.map((r) => (
+                  <div key={r.nombre} className={`sl-fila sl-fila--eq${r.lugar <= 3 ? ` sl-fila--l${r.lugar}` : ''}`}>
+                    <span className="sl-fila__lugar">{r.lugar}</span>
+                    <span className="sl-fila__dos">
+                      <span className="sl-fila__nombre">{corto(r.nombre)}</span>
+                      <span className="sl-fila__socios">con {r.socios.map((s) => `${corto(s.nombre).split(' ')[0]}${s.operaciones > 1 ? ` ×${s.operaciones}` : ''}`).join(', ')}</span>
+                    </span>
+                    <span className="sl-num sl-num--fuerte">
+                      {nCols === 1 && <span className="sl-fila__barra"><span style={{ width: `${Math.max(4, (r.operaciones / tope) * 100)}%` }} /></span>}
+                      {r.operaciones}
+                    </span>
+                    <span className="sl-num">{r.ventas || '—'}</span>
+                    <span className="sl-num">{r.rentas || '—'}</span>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </Diapositiva>
   );

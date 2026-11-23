@@ -103,6 +103,44 @@ export interface Advisor {
   totales: AdvisorTotals;
   operacionesPendientes: OperacionPendiente[];
   cierresDetalle: CierreDetalle[];
+  /** Operaciones cerradas con otro asesor de la oficina (lado 1 y lado 2 RE/MAX Terra). */
+  ladosEquipo?: LadosEquipoAsesor;
+}
+
+export interface SocioLados { nombre: string; operaciones: number }
+
+export interface LadosEquipoAsesor {
+  operaciones: number;
+  ventas: number;
+  rentas: number;
+  /** Operaciones directas: el mismo asesor llevó los dos lados. */
+  directas: number;
+  meses: number[];
+  socios: SocioLados[];
+}
+
+export interface LadosRanking {
+  lugar: number;
+  nombre: string;
+  operaciones: number;
+  ventas: number;
+  rentas: number;
+  volumen: number;
+  socios: SocioLados[];
+}
+
+export interface LadosTerra {
+  operaciones: number;
+  ladosTotales: number;
+  ladosTerra: number;
+  ladosDobleTerra: number;
+  operacionesEquipo: number;
+  operacionesDirectas: number;
+  operacionesExternas: number;
+  porTipo: Record<"VENTA" | "RENTA", { ops: number; lados: number; equipo: number; directas: number }>;
+  series: { terra: number[]; totales: number[]; equipo: number[]; directas: number[]; dobleTerra: number[] };
+  ranking: LadosRanking[];
+  detalle: { mes: number; dia: number | null; tipo: "VENTA" | "RENTA"; monto: number; propiedad: string; asesores: string[] }[];
 }
 
 export interface Cohorte {
@@ -123,7 +161,7 @@ export interface TeamsData {
       nombre: string;
       canonico: string;
       sinDatos: boolean;
-      meses: Record<"recorridos" | "mostradas" | "opcionadas" | "leads" | "rentas" | "ventas", number[]>;
+      meses: Record<"recorridos" | "mostradas" | "opcionadas" | "leads" | "rentas" | "ventas" | "equipo", number[]>;
     }[];
   }[];
   sinEquipo: string[];
@@ -137,6 +175,8 @@ export interface DashboardData {
   capacitacionArchivo: string | null;
   teams: TeamsData;
   cohorte: Cohorte;
+  /** Acumulado anual de lados (lado 1 / lado 2 RE/MAX Terra) y reconocimiento al trabajo en equipo. */
+  ladosTerra: LadosTerra;
   currentMonth: number;
   previousMonth: number | null;
   mesesDisponibles: number[];

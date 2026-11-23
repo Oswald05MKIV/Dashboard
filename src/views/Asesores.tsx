@@ -183,6 +183,16 @@ function AsesorDetalle({ data, advisor: a, onBack }: { data: DashboardData; advi
             <div className="mini-stat"><div className="v num">{fNum(a.totales.apartados)}</div><div className="l">Apartados {data.year}</div></div>
           </div>
           {pi !== null && <div style={{ marginBottom: 12 }}><Delta actual={cie.actual} anterior={cie.anterior} /></div>}
+          {a.ladosEquipo && (
+            <div className="mini-stat" style={{ marginBottom: 12, textAlign: "left" }}>
+              <div className="v num">{fNum(a.ladosEquipo.operaciones)}</div>
+              <div className="l">
+                Operaciones {data.year} con los 2 lados en la oficina (con un compañero)
+                {a.ladosEquipo.socios.length > 0 && <> · con {a.ladosEquipo.socios.map((s) => `${s.nombre}${s.operaciones > 1 ? ` (${s.operaciones})` : ""}`).join(", ")}</>}
+                {a.ladosEquipo.directas > 0 && <> · además {a.ladosEquipo.directas} directa{a.ladosEquipo.directas === 1 ? "" : "s"} (los 2 lados suyos)</>}
+              </div>
+            </div>
+          )}
           <div className="card-title" style={{ marginBottom: 6 }}><TrendingUp size={13} /> Tendencia mensual</div>
           <BarrasMensuales series={a.cierresMes} hasta={cm} alto={150} />
         </Card>

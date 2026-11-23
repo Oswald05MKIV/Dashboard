@@ -501,3 +501,41 @@
 
 .sl-sem__pie { display: flex; align-items: center; justify-content: space-between; gap: 2cqw; font-size: 1.05cqw; color: var(--sl-texto-3); }
 .sl-mes__curso { align-self: flex-start; margin: -0.4cqw 0 0.8cqw; padding: 0.25cqw 0.7cqw; border-radius: 99cqw; font-size: 0.85cqw; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: #0c2453; background: var(--sl-acento); }
+
+/* =====================================================================
+   LADOS RE/MAX TERRA · TRABAJO EN EQUIPO
+   ===================================================================== */
+.sl--equipo { --sl-acento: #3fd6c6; --sl-acento-2: #12968b; --sl-glow: rgba(63, 214, 198, 0.30); }
+.sl-acum .sl-stats--col strong { min-width: 5.4cqw; }
+.sl-acum .sl-stats--col span { font-size: 1.1cqw; }
+.sl--equipo .sl-acum__der { flex-direction: column; gap: 1cqw; }
+.sl-barra__col--pila { flex-direction: column; justify-content: flex-end; }
+.sl-barra__col--pila > .sl-pila { width: 100%; border-radius: 0; }
+.sl-barra__col--pila > .sl-pila:last-child { border-radius: 0.6cqw 0.6cqw 0 0; }
+.sl-pila--eq, .sl-barra__col--pila > .sl-pila--eq { background: linear-gradient(180deg, var(--sl-oro-1), var(--sl-oro-2)); }
+.sl-pila--dir, .sl-barra__col--pila > .sl-pila--dir { background: linear-gradient(180deg, var(--sl-acento), var(--sl-acento-2)); }
+.sl-leyenda-lados { margin: 0; display: flex; gap: 2cqw; font-size: 1.05cqw; color: var(--sl-texto-2); }
+.sl-leyenda-lados span { display: inline-flex; align-items: center; gap: 0.6cqw; }
+.sl-leyenda-lados i { display: inline-block; width: 1.4cqw; height: 0.9cqw; border-radius: 0.3cqw; }
+
+.sl-lista--equipo { grid-template-columns: 30% 1fr; }
+.sl-lista--equipo .sl-pastilla { margin-bottom: 1cqw; }
+.sl-ganador { margin: 1.6cqw 0 0; display: flex; flex-direction: column; align-items: center; text-align: center; }
+.sl-medalla--chica .sl-av--hero { width: 13cqw; height: 13cqw; padding: 0.7cqw; box-shadow: 0 0 3.4cqw rgba(243, 207, 106, 0.45); }
+.sl-medalla--chica .sl-av--hero .sl-av__in { font-size: 4.4cqw; border-width: 0.35cqw; }
+.sl-medalla--chica .sl-medalla__cinta { width: 3cqw; height: 7.6cqw; }
+.sl-medalla--chica .sl-medalla__estrella { width: 3.4cqw; height: 3.4cqw; right: 0.4cqw; top: -0.4cqw; }
+.sl-medalla--chica .sl-medalla__estrella svg { width: 1.8cqw; height: 1.8cqw; }
+.sl-ganador__lugar { margin: 1.4cqw 0 0; font-size: 1.05cqw; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; color: var(--sl-acento); position: relative; z-index: 2; }
+.sl-ganador__nombre { margin: 0.3cqw 0 0; font-family: var(--sl-display); font-size: 2.5cqw; font-weight: 900; letter-spacing: -0.02em; line-height: 1.05; }
+.sl-ganador__dato { margin: 0.6cqw 0 0; font-size: 1.2cqw; color: var(--sl-texto-2); }
+.sl-ganador__dato strong { font-family: var(--sl-display); font-size: 1.9cqw; color: var(--sl-oro-1); margin-right: 0.3cqw; }
+.sl-texto--chico { font-size: 1.05cqw; margin-top: auto; padding-bottom: 1.2cqw; color: var(--sl-texto-3); }
+.sl-lista--equipo .sl-lista__izq .sl-marca { margin-top: 0; }
+
+.sl-tabla--equipo.sl-tabla--c1 { font-size: 1.7cqw; }
+.sl-tabla--equipo.sl-tabla--c2 { font-size: 1.3cqw; }
+.sl-fila--eq { grid-template-columns: 1.9em minmax(0, 1fr) 2.8em 2.8em 2.8em; padding: 0.42em 0.5em; }
+.sl-tabla--c1 .sl-fila--eq { grid-template-columns: 1.9em minmax(0, 1fr) 8em 3.4em 3.4em; }
+.sl-fila__dos { display: flex; flex-direction: column; min-width: 0; line-height: 1.15; }
+.sl-fila__socios { font-size: 0.66em; color: var(--sl-texto-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

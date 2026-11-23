@@ -5,7 +5,7 @@ import { MESES_CORTOS, MESES_LARGOS } from "../config";
 import { fMoney, fNum } from "../lib/metrics";
 import { Card, Kpi, MonthChip, PageHead } from "../components/ui";
 import { ComparativoMensual } from "../components/charts";
-import { SlideAcumulado } from "../components/Diapositivas";
+import { registrarCortos, SlideAcumulado, SlideEquipo, SlideLados } from "../components/Diapositivas";
 import { useAviso } from "../components/TopsJulio";
 import "../components/tops-teams.css";
 
@@ -36,6 +36,7 @@ export function Operaciones({ data }: { data: DashboardData }) {
   }, [data, q, pago, mes]);
 
   const { aviso, mostrar } = useAviso();
+  registrarCortos(data.teams.equipos);
   // "Hasta hoy": fecha en que se generaron los datos, en hora de Querétaro.
   const hoy = useMemo(() => {
     const p = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Mexico_City", year: "numeric", month: "numeric", day: "numeric" })
@@ -68,6 +69,42 @@ export function Operaciones({ data }: { data: DashboardData }) {
           <SlideAcumulado tipo="rentas" volumen={data.totals.series.volRenta} operaciones={data.totals.series.opsRenta ?? []} hasta={hoy} year={data.year} onAviso={mostrar} />
         </div>
         {aviso && <div className="tt-toast">{aviso}</div>}
+      </div>
+
+      {/* Lados RE/MAX Terra: lado 1 y lado 2 de la oficina + reconocimiento al trabajo en equipo */}
+      <div className="section">
+        <h3 className="sl-seccion__t">Lados RE/MAX Terra · trabajo en equipo</h3>
+        <p className="sl-seccion__s">
+          Cada operación tiene 2 lados. Aquí se cuentan los lados que se quedaron en la oficina en {data.year} y quién cerró más operaciones con un compañero de RE/MAX Terra.
+        </p>
+        <div className="sl-rejilla">
+          <SlideLados lados={data.ladosTerra} hasta={hoy} year={data.year} onAviso={mostrar} />
+          <SlideEquipo lados={data.ladosTerra} year={data.year} onAviso={mostrar} />
+        </div>
+      </div>
+
+      <div className="section">
+        <Card title={`Operaciones con los 2 lados en la oficina · ${data.ladosTerra.detalle.length} entre compañeros en ${data.year}`} icon={<CheckCircle2 size={14} />}>
+          <div className="table-wrap">
+            <table className="data">
+              <thead>
+                <tr><th>Cierre</th><th>Lado 1</th><th>Lado 2</th><th>Tipo</th><th>Propiedad</th><th className="r">Monto operación</th></tr>
+              </thead>
+              <tbody>
+                {data.ladosTerra.detalle.map((o, i) => (
+                  <tr key={i}>
+                    <td>{o.dia ? `${o.dia} ` : ""}{MESES_CORTOS[o.mes - 1]}</td>
+                    <td style={{ fontWeight: 600 }}>{o.asesores[0]}</td>
+                    <td style={{ fontWeight: 600 }}>{o.asesores[1]}</td>
+                    <td><span className={`badge ${o.tipo === "VENTA" ? "info" : "neutral"}`}>{o.tipo}</span></td>
+                    <td>{o.propiedad || "—"}</td>
+                    <td className="r num">{fMoney(o.monto)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
       </div>
 
       {/* Pendientes: sección muy visible */}

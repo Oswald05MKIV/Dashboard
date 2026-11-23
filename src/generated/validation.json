@@ -1,5 +1,5 @@
 {
-  "generadoEl": "2026-10-27T06:26:56.878Z",
+  "generadoEl": "2026-11-23T22:11:55.619Z",
   "archivos": {
     "opciones": "OPCIONES.xlsx",
     "apartado": "APARTADO.xlsx",
@@ -10,8 +10,8 @@
     "Filas 48 y 49 (Judith Diosdado Torres, Cerro grande 135 , priv Juriquilla No ti…): registro duplicado — se conservó la fila 48",
     "Filas 77 y 78 (Susana Ávila Basalrua, Peña de Bernal 5151-D 65 Villa Romana, E…): registro duplicado — se conservó la fila 78",
     "Filas 173 y 174 (Adriana Regalado, Senderó de los Celajes 6 Fracc. Milenio …): registro duplicado — se conservó la fila 173",
-    "Filas 180 y 182 (Maria de los Angeles Bostal, AVENIDA CAYUCO NÚMERO EXTERIOR 12 C NÚME…): registro duplicado — se conservó la fila 180",
-    "Filas 181 y 183 (Maria de los Angeles Bostal, Garfias 123 no aplica Residencial El REf…): registro duplicado — se conservó la fila 181"
+    "Filas 181 y 183 (Maria de los Angeles Bostal, AVENIDA CAYUCO NÚMERO EXTERIOR 12 C NÚME…): registro duplicado — se conservó la fila 181",
+    "Filas 182 y 184 (Maria de los Angeles Bostal, Garfias 123 no aplica Residencial El REf…): registro duplicado — se conservó la fila 182"
   ],
   "fechasCorregidas": [
     "Opcionadas de Noel Castro en agosto: 0 → 1 (opcionó una propiedad (venta) en agosto; no viene en la hoja AGOSTO 2026)",
@@ -159,6 +159,7 @@
     "\"Lorena Ramos\" → \"Lorena Ramos Quevedo\"",
     "\"Erik Trotter\" → \"Erik Trotter Bustamante\"",
     "\"Pilar Gonzalez\" → \"Pilar González Ávila\"",
+    "\"Elena Romano\" → \"María Elena Romano Pelayo\"",
     "\"Pilar Gonzalez\" → \"Pilar González Ávila\"",
     "\"Christian Alvarado\" → \"Christian Alvarado Martínez\"",
     "\"Angie Bostal\" → \"Maria de los Angeles Bostal\"",
@@ -168,7 +169,12 @@
     "\"Judith Diosdado\" → \"Judith Diosdado Torres\"",
     "\"Lorena Ramos\" → \"Lorena Ramos Quevedo\"",
     "\"Erik Trotter\" → \"Erik Trotter Bustamante\"",
-    "\"Elena Romano\" → \"María Elena Romano Pelayo\"",
+    "\"Marisol Huerta\" → \"Marisol Huerta Ruiz\"",
+    "\"Marisol Huerta\" → \"Marisol Huerta Ruiz\"",
+    "\"Veronica Flores\" → \"Alma Veronica Flores Guzman\"",
+    "\"Veronica Flores\" → \"Alma Veronica Flores Guzman\"",
+    "\"Pilar Gonzalez\" → \"Pilar González Ávila\"",
+    "\"Veronica Flores\" → \"Alma Veronica Flores Guzman\"",
     "Fila 45: se acreditó a \"Maria de los Angeles Bostal\" como ASESOR 2 de la oficina ($16,000)",
     "Fila 57: se acreditó a \"Marisol Huerta Ruiz\" como ASESOR 2 de la oficina ($19,000)",
     "Fila 60: se acreditó a \"Nidia Gisela García Trujillo\" como ASESOR 2 de la oficina ($5,750)",
@@ -184,10 +190,11 @@
     "Fila 165: se acreditó a \"Adriana Regalado\" como ASESOR 2 de la oficina ($2,000)",
     "Fila 166: se acreditó a \"Adriana Calva\" como ASESOR 2 de la oficina ($5,750)",
     "Fila 171: se acreditó a \"Pilar González Ávila\" como ASESOR 2 de la oficina ($7,600)",
-    "Fila 185: se acreditó a \"Christian Díaz Padilla\" como ASESOR 2 de la oficina ($20,625)"
+    "Fila 186: se acreditó a \"Christian Díaz Padilla\" como ASESOR 2 de la oficina ($20,625)",
+    "Fila 194: se acreditó a \"Erik Trotter Bustamante\" como ASESOR 2 de la oficina ($17,355.38)"
   ],
   "advertencias": [
-    "Operaciones compartidas con un asesor de la oficina en ASESOR 2: 16 créditos generados",
+    "Operaciones compartidas con un asesor de la oficina en ASESOR 2: 17 créditos generados",
     "No se encontró CAPACITACION.xlsx en /data — el índice de los escuderos usa opcionadas y la estimación provisional",
     "Asesor dado de baja: \"Adriana Cedillo\" — fuera del dashboard",
     "Asesor dado de baja: \"Ana Escamilla\" — fuera del dashboard (tenía 1 cierre(s) 2026 por $3,000, siguen contando en los totales de la oficina)",

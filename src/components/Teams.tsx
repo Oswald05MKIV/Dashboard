@@ -122,6 +122,12 @@ function TarjetaTeam({ team, insignias, onAviso }: { team: Team; insignias: stri
           </tr>
         </tfoot>
       </table>
+      <p className="tt-equipo-lados">
+        🤝 <strong>{team.total.equipo}</strong> participaci{team.total.equipo === 1 ? 'ón' : 'ones'} en operaciones con los 2 lados en la oficina
+        {team.integrantes.some((p) => p.equipo > 0) && (
+          <span> · {team.integrantes.filter((p) => p.equipo > 0).map((p) => `${p.nombre} ${p.equipo}`).join(', ')}</span>
+        )}
+      </p>
     </section>
   );
 }
