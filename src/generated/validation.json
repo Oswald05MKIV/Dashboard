@@ -1,5 +1,5 @@
 {
-  "generadoEl": "2026-11-23T22:24:40.785Z",
+  "generadoEl": "2026-11-23T23:52:59.282Z",
   "archivos": {
     "opciones": "OPCIONES.xlsx",
     "apartado": "APARTADO.xlsx",
@@ -198,13 +198,16 @@
     "No se encontró CAPACITACION.xlsx en /data — el índice de los escuderos usa opcionadas y la estimación provisional",
     "Asesor dado de baja: \"Adriana Cedillo\" — fuera del dashboard",
     "Asesor dado de baja: \"Ana Escamilla\" — fuera del dashboard (tenía 1 cierre(s) 2026 por $3,000, siguen contando en los totales de la oficina)",
+    "Asesor dado de baja: \"Christian Alvarado Martínez\" — fuera del dashboard (tenía 10 cierre(s) 2026 por $129,790, siguen contando en los totales de la oficina)",
     "Asesor dado de baja: \"Consuelo Becerril\" — fuera del dashboard",
     "Asesor dado de baja: \"Consuelo Ramírez\" — fuera del dashboard (tenía 1 cierre(s) 2026 por $40,129.88, siguen contando en los totales de la oficina)",
     "Asesor dado de baja: \"Eduardo Franco Navarro\" — fuera del dashboard",
+    "Asesor dado de baja: \"Héctor de la Peña\" — fuera del dashboard (tenía 2 cierre(s) 2026 por $10,125, siguen contando en los totales de la oficina)",
     "Asesor dado de baja: \"Ivette Camacho\" — fuera del dashboard (tenía 1 cierre(s) 2026 por $4,500, siguen contando en los totales de la oficina)",
     "Asesor dado de baja: \"Joel Martínez Rodeíguez\" — fuera del dashboard",
     "Asesor dado de baja: \"Lizbeth Pérez\" — fuera del dashboard (tenía 1 cierre(s) 2026 por $5,750, siguen contando en los totales de la oficina)",
     "Asesor dado de baja: \"Lorena Payan\" — fuera del dashboard (tenía 2 cierre(s) 2026 por $12,250, siguen contando en los totales de la oficina)",
+    "Asesor dado de baja: \"Lorena Ramos Quevedo\" — fuera del dashboard (tenía 11 cierre(s) 2026 por $109,112.5, siguen contando en los totales de la oficina)",
     "Asesor dado de baja: \"Lourdes Rodríguez Bautista\" — fuera del dashboard",
     "Asesor dado de baja: \"Lucía Calderón\" — fuera del dashboard",
     "Asesor dado de baja: \"Luis Eduardo Duval de las Casas\" — fuera del dashboard",
@@ -219,8 +222,11 @@
     "Asesor externo \"Juan Rodriguez\" sin actividad 2026 (solo operaciones de años anteriores) — excluido del dashboard",
     "Asesor externo \"Leticia Mora\" sin actividad 2026 (solo operaciones de años anteriores) — excluido del dashboard",
     "Asesor externo \"Sandra Diaz\" sin actividad 2026 (solo operaciones de años anteriores) — excluido del dashboard",
+    "Teams: \"Héctor de la Peña\" (Persas) está dado de baja — fuera del equipo",
+    "Teams: \"Chris Alvarado\" (Griegos) está dado de baja — fuera del equipo",
     "Teams: \"Liz Pérez\" (Griegos) está dado de baja — fuera del equipo",
     "Teams: \"Susana Ávila\" (Troyanos) está dado de baja — fuera del equipo",
+    "Teams: \"Lore Ramos\" (Romanos) está dado de baja — fuera del equipo",
     "Teams: \"Alma Veronica Flores Guzman\" está activo pero no pertenece a ningún equipo"
   ],
   "asesoresFueraDeRoster": [

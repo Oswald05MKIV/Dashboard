@@ -195,7 +195,7 @@ export function topsDelMes(data: DashboardData, m: number): DatosTops {
     orden: ["recorridos", "mostradas", "opcionadas", "rentas", "ventas"],
     tops: {
       recorridos: { titulo: "Recorridos", unidad: "recorridos", items: podio(recItems), total: S.recorridos[i] || 0, totalEtiqueta: "recorridos en la oficina",
-        nota: `Recorridos registrados en ${mes}${enCurso}, con los leads que recibió cada quien.` },
+        nota: `Recorridos registrados en ${mes}${enCurso}${act.some((a) => leads(a) > 0) ? ", con los leads que recibió cada quien" : ""}.` },
       mostradas: { titulo: "Opciones mostradas", unidad: "opciones", items: podio(mos), total: S.opciones[i] || 0, totalEtiqueta: "opciones mostradas en la oficina",
         nota: `Opciones mostradas a clientes en ${mes}${enCurso}.` },
       opcionadas: { titulo: "Propiedades opcionadas", unidad: "propiedades", items: podio(opc), total: S.opcionadas[i] || 0, totalEtiqueta: "propiedades opcionadas en la oficina",

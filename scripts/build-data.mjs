@@ -235,6 +235,9 @@ const ASESORES_BAJA = [
   "Consuelo Becerril",
   "Oswaldo Sánchez",
   "Sophie de la Torre",
+  "Lorena Ramos Quevedo",
+  "Christian Alvarado Martínez",
+  "Héctor de la Peña",
 ];
 
 /** true  = sus operaciones ya cerradas siguen sumando a los totales de la oficina
@@ -991,6 +994,12 @@ for (const op of opsLados.values()) {
   totals.series[`vol${t}`][op.mes - 1] += op.monto;
   totals.series[`ops${t}`][op.mes - 1]++;
 }
+// Las bajas no aparecen con nombre en ninguna parte: sus operaciones siguen contando para quien las cerró con ellos.
+const sinBaja = (n) => (esBaja(n) ? "Ex asesor de la oficina" : n);
+const limpiarSocios = (lista) => lista.forEach((r) => { r.socios = r.socios.map((x) => ({ ...x, nombre: sinBaja(x.nombre) })); });
+limpiarSocios(rankingLados);
+advisorsFinal.forEach((a) => a.ladosEquipo && limpiarSocios([a.ladosEquipo]));
+detalleEquipo.forEach((d) => { d.asesores = d.asesores.map(sinBaja); });
 const ladosTerra = {
   operaciones: ldOps,
   ladosTotales: ldOps * 2,

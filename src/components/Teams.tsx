@@ -18,7 +18,7 @@ const mxn = (n: number) =>
 // se abrevia ($1.98 M) para que el número nunca se salga de la columna.
 const mxnCorto = (n: number) =>
   n >= 1_000_000
-    ? `$${(n / 1_000_000).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} M`
+    ? `$${(n / 1_000_000).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MDP`
     : mxn(n);
 
 const num = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1));

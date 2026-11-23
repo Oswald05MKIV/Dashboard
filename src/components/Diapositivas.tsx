@@ -16,7 +16,7 @@ import './diapositivas.css';
 
 export const mxn = (n: number) => n.toLocaleString('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 });
 export const mxnM = (n: number) =>
-  n >= 1_000_000 ? `$${(n / 1_000_000).toLocaleString('es-MX', { maximumFractionDigits: 1 })} M` : mxn(n);
+  n >= 1_000_000 ? `$${(n / 1_000_000).toLocaleString('es-MX', { maximumFractionDigits: 1 })} MDP` : mxn(n);
 const num = (n: number) => (Number.isInteger(n) ? n.toLocaleString('es-MX') : n.toFixed(1));
 const iniciales = (n: string) => n.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]).join('').toUpperCase();
 const slug = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -92,7 +92,7 @@ export function SlideTop({ datos, clave, onAviso }: { datos: DatosTops; clave: C
   const grupos = [...new Set(b.items.map((i) => i.lugar))].sort((x, y) => x - y).slice(0, 3)
     .map((l, pos) => ({ l, pos: pos + 1, gente: b.items.filter((i) => i.lugar === l) }));
   const orden = [grupos[1], grupos[0], grupos[2]].filter(Boolean);
-  const conLeads = clave === 'recorridos';
+  const conLeads = clave === 'recorridos' && hayLeads(datos);
 
   return (
     <Diapositiva etiqueta={`Top ${b.titulo.toLowerCase()}`} archivo={`top-${clave}-${datos.periodo}`} tema={`top sl--${clave}`} onAviso={onAviso}>
@@ -210,10 +210,15 @@ function Prueba({ gente }: { gente: TopItem[] }) {
   );
 }
 
+/** Si en el mes nadie tiene leads capturados, las imágenes no muestran leads (para no decir "0 leads recibidos"). */
+export const hayLeads = (d: DatosTops) =>
+  Object.values(d.listas).some((l) => Array.isArray(l) && l.some((i: { leads?: number }) => (i.leads ?? 0) > 0));
+
 export function SlideRecorridosLeads({ datos, onAviso }: { datos: DatosTops; onAviso: (m: string) => void }) {
   const items = datos.listas.recorridosLeads;
   const totRec = items.reduce((s, i) => s + i.valor, 0);
   const totLeads = items.reduce((s, i) => s + (i.leads ?? 0), 0);
+  const L = hayLeads(datos);
   return (
     <Diapositiva etiqueta="Recorridos y leads · todos" archivo={`recorridos-y-leads-${datos.periodo}`} tema="lista sl--azulista" onAviso={onAviso}>
       <Footprints className="sl-agua" aria-hidden="true" strokeWidth={1} />
@@ -221,19 +226,19 @@ export function SlideRecorridosLeads({ datos, onAviso }: { datos: DatosTops; onA
         <div className="sl-lista__izq">
           <span className="sl-ico"><Footprints aria-hidden="true" strokeWidth={2.2} /></span>
           <p className="sl-eyebrow">{datos.periodo}</p>
-          <h2 className="sl-h2">Recorridos y leads</h2>
-          <p className="sl-texto">Todos los asesores que salieron a recorrido en {datos.mes}, con los leads que recibió cada uno.</p>
+          <h2 className="sl-h2">{L ? 'Recorridos y leads' : 'Recorridos'}</h2>
+          <p className="sl-texto">Todos los asesores que salieron a recorrido en {datos.mes}{L ? ', con los leads que recibió cada uno' : ''}.</p>
           <div className="sl-kpis">
             <p><strong>{items.length}</strong><span>asesores con recorridos</span></p>
             <p><strong>{num(totRec)}</strong><span>recorridos</span></p>
-            <p><strong>{num(totLeads)}</strong><span>leads recibidos</span></p>
+            {L && <p><strong>{num(totLeads)}</strong><span>leads recibidos</span></p>}
           </div>
           <Marca />
         </div>
         <div className="sl-lista__der">
           <Tabla items={items} conLugar columnas={[
             { titulo: 'Recorridos', valor: (i) => i.valor, fuerte: true, barra: true },
-            { titulo: 'Leads', valor: (i) => i.leads ?? 0 },
+            ...(L ? [{ titulo: 'Leads', valor: (i: TopItem) => i.leads ?? 0 }] : []),
           ]} />
         </div>
       </div>
@@ -278,6 +283,7 @@ export function SlideOpcionaron({ datos, onAviso }: { datos: DatosTops; onAviso:
 export function SlideSinRecorridos({ datos, onAviso }: { datos: DatosTops; onAviso: (m: string) => void }) {
   const items = datos.listas.sinRecorridos;
   const totLeads = items.reduce((s, i) => s + (i.leads ?? 0), 0);
+  const L = hayLeads(datos);
   return (
     <Diapositiva etiqueta="Sin recorridos" archivo={`sin-recorridos-${datos.periodo}`} tema="lista sl--grafito" onAviso={onAviso}>
       <UserX className="sl-agua" aria-hidden="true" strokeWidth={1} />
@@ -286,18 +292,18 @@ export function SlideSinRecorridos({ datos, onAviso }: { datos: DatosTops; onAvi
           <span className="sl-ico"><UserX aria-hidden="true" strokeWidth={2.2} /></span>
           <p className="sl-eyebrow">{datos.periodo}</p>
           <h2 className="sl-h2">Sin recorridos este mes</h2>
-          <p className="sl-texto">Asesores que no registraron ningún recorrido en {datos.mes} y los leads que recibieron. Cada lead es una oportunidad de recorrido.</p>
+          <p className="sl-texto">Asesores que no registraron ningún recorrido en {datos.mes}{L ? ' y los leads que recibieron. Cada lead es una oportunidad de recorrido' : ''}.</p>
           <div className="sl-kpis">
             <p><strong>{items.length}</strong><span>asesores sin recorridos</span></p>
-            <p><strong>{num(totLeads)}</strong><span>leads sin convertir en recorrido</span></p>
+            {L && <p><strong>{num(totLeads)}</strong><span>leads sin convertir en recorrido</span></p>}
           </div>
           <Marca />
         </div>
         <div className="sl-lista__der">
           {items.length ? (
             <Tabla items={items} columnas={[
-              { titulo: 'Leads recibidos', valor: (i) => i.leads ?? 0, fuerte: true, barra: true },
-              { titulo: 'Recorridos', valor: () => 0, alerta: true },
+              ...(L ? [{ titulo: 'Leads recibidos', valor: (i: TopItem) => i.leads ?? 0, fuerte: true, barra: true }] : []),
+              { titulo: 'Recorridos', valor: () => 0, alerta: true, fuerte: !L },
             ]} />
           ) : (
             <div className="sl-nadie"><Sparkles aria-hidden="true" /><p className="sl-nadie__t">Todos hicieron al menos un recorrido</p></div>
@@ -333,7 +339,7 @@ export function SlideNoOpcionaron({ datos, onAviso }: { datos: DatosTops; onAvis
             <Tabla items={items} columnas={[
               { titulo: 'Opcionadas', valor: () => 0, alerta: true, fuerte: true },
               { titulo: 'Recorridos', valor: (i) => i.recorridos ?? 0 },
-              { titulo: 'Leads', valor: (i) => i.leads ?? 0 },
+              ...(hayLeads(datos) ? [{ titulo: 'Leads', valor: (i: TopItem) => i.leads ?? 0 }] : []),
             ]} />
           ) : (
             <div className="sl-nadie"><Sparkles aria-hidden="true" /><p className="sl-nadie__t">Todos opcionaron al menos una propiedad</p></div>
@@ -350,7 +356,7 @@ export function SlideNoOpcionaron({ datos, onAviso }: { datos: DatosTops; onAvis
 /* ------------------------------------------------------------------ */
 export function SlideMinimo({ tipo, minimo, onAviso }: { tipo: 'ventas' | 'rentas'; minimo: number; onAviso: (m: string) => void }) {
   const Icono = tipo === 'ventas' ? Building2 : House;
-  const corto = tipo === 'ventas' ? '$2 M' : '$40 mil';
+  const corto = tipo === 'ventas' ? '$2 MDP' : '$40 mil';
   return (
     <Diapositiva etiqueta={`Comunicado · mínimo en ${tipo}`} archivo={`regla-minimo-${tipo}`} tema={`aviso sl--${tipo}`} onAviso={onAviso}>
       <Icono className="sl-agua" aria-hidden="true" strokeWidth={1} />
@@ -688,7 +694,7 @@ export function SlideRankingLados({
     const x = r as typeof lados.rankingLadosTotal[number];
     const valores: [number, number, number] = modo === 'lados' ? [x.lados, x.equipo, x.directas] : [r.operaciones, r.ventas, r.rentas];
     const sub = modo === 'equipo'
-      ? `con ${r.socios.map((s) => `${corto(s.nombre).split(' ')[0]}${s.operaciones > 1 ? ` ×${s.operaciones}` : ''}`).join(', ')}`
+      ? `con ${r.socios.map((s) => `${s.nombre.startsWith('Ex asesor') ? 'ex asesor' : corto(s.nombre).split(' ')[0]}${s.operaciones > 1 ? ` ×${s.operaciones}` : ''}`).join(', ')}`
       : modo === 'lados'
         ? ''
         : `${r.ventas} venta${r.ventas === 1 ? '' : 's'} · ${r.rentas} renta${r.rentas === 1 ? '' : 's'}`;
