@@ -794,28 +794,28 @@ export function SlideApartados({
   });
   const total = ap.ventas + ap.rentas;
   return (
-    <Diapositiva etiqueta="Apartados en proceso" archivo={`apartados-en-proceso-${periodo}`} tema="lista sl--ventas" onAviso={onAviso}>
+    <Diapositiva etiqueta={`Operaciones ${mes}`} archivo={`operaciones-${periodo.toLowerCase().replace(/\s+/g, '-')}`} tema="lista sl--ventas" onAviso={onAviso}>
       <Building2 className="sl-agua" aria-hidden="true" strokeWidth={1} />
       <div className="sl-lista">
         <div className="sl-lista__izq">
           <span className="sl-ico"><Building2 aria-hidden="true" strokeWidth={2.2} /></span>
           <p className="sl-eyebrow">{periodo} · corte {ap.corte}</p>
-          <h2 className="sl-h2">Apartados en proceso</h2>
-          <p className="sl-texto">Operaciones apartadas que siguen en proceso en {mes}. Todavía no están cerradas: cuentan como cierre cuando se firme.</p>
+          <h2 className="sl-h2">Operaciones {mes}</h2>
+          <p className="sl-texto">Operaciones de la oficina en {mes} por asesor.</p>
           <div className="sl-kpis">
-            <p><strong>{ap.operaciones}</strong><span>apartados vigentes</span></p>
-            <p><strong>{mxnM(total)}</strong><span>valor total en proceso</span></p>
+            <p><strong>{ap.operaciones}</strong><span>operaciones {mes}</span></p>
+            <p><strong>{mxnM(total)}</strong><span>valor total</span></p>
           </div>
           <Marca />
         </div>
         <div className="sl-lista__der">
           <Tabla items={items} conLugar columnas={[
-            { titulo: 'Apartados', valor: (i) => i.valor, fuerte: true, barra: true },
+            { titulo: 'Operaciones', valor: (i) => i.valor, fuerte: true, barra: true },
             { titulo: 'Venta', valor: (i) => i.venta ?? 0, angosta: true },
             { titulo: 'Renta', valor: (i) => i.renta ?? 0, angosta: true },
           ]} />
           {ap.porAsesor.length < ap.operaciones && (
-            <p className="sl-texto sl-texto--chico">Los apartados compartidos entre dos asesores aparecen con cada uno; el total de la oficina los cuenta una vez.</p>
+            <p className="sl-texto sl-texto--chico">Las operaciones compartidas entre dos asesores aparecen con cada uno; el total de la oficina las cuenta una vez.</p>
           )}
         </div>
       </div>
