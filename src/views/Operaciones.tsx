@@ -65,8 +65,10 @@ export function Operaciones({ data }: { data: DashboardData }) {
       {/* Acumulado del año: ventas y rentas, cada una capturable en 16:9 */}
       <div className="section">
         <div className="sl-rejilla">
-          <SlideAcumulado tipo="ventas" volumen={data.totals.series.volVenta} operaciones={data.totals.series.opsVenta ?? []} hasta={hoy} year={data.year} onAviso={mostrar} />
-          <SlideAcumulado tipo="rentas" volumen={data.totals.series.volRenta} operaciones={data.totals.series.opsRenta ?? []} hasta={hoy} year={data.year} onAviso={mostrar} />
+          <SlideAcumulado tipo="ventas" volumen={data.totals.series.volVenta} operaciones={data.totals.series.opsVenta ?? []} hasta={hoy} year={data.year} onAviso={mostrar}
+            apartados={data.apartadosEnCurso && { mes: data.apartadosEnCurso.mes, monto: data.apartadosEnCurso.ventas, ops: data.apartadosEnCurso.opsVenta }} />
+          <SlideAcumulado tipo="rentas" volumen={data.totals.series.volRenta} operaciones={data.totals.series.opsRenta ?? []} hasta={hoy} year={data.year} onAviso={mostrar}
+            apartados={data.apartadosEnCurso && { mes: data.apartadosEnCurso.mes, monto: data.apartadosEnCurso.rentas, ops: data.apartadosEnCurso.opsRenta }} />
         </div>
         {aviso && <div className="tt-toast">{aviso}</div>}
       </div>

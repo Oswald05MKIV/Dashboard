@@ -77,7 +77,8 @@ function valorTop(it: TopItem, b: TopBloque) {
   if (b.sinMonto) {
     const n = it.ops ?? 0;
     const t = b.unidad === 'rentas' ? 'renta' : 'venta';
-    return { n: String(n), u: `${t}${n === 1 ? '' : 's'} cerrada${n === 1 ? '' : 's'}` };
+    const conAp = b.titulo.includes('apartad');
+    return { n: String(n), u: `${t}${n === 1 ? '' : 's'}${conAp ? '' : ` cerrada${n === 1 ? '' : 's'}`}` };
   }
   return { n: num(it.valor), u: b.unidad };
 }
@@ -107,7 +108,7 @@ export function SlideTop({ datos, clave, onAviso }: { datos: DatosTops; clave: C
             <p className="sl-regla">
               <span>Mínimo para aparecer</span>
               <strong>{mxn(b.minimo)}</strong>
-              <em>en {b.unidad} cerradas del mes</em>
+              <em>en {b.unidad} {b.titulo.includes('apartad') ? 'cerradas y apartadas' : 'cerradas'} del mes</em>
             </p>
           )}
           <div className="sl-top__pie">
@@ -437,9 +438,11 @@ export function SlideFelicitacion({
 /* Acumulado del año (Operaciones)                                      */
 /* ------------------------------------------------------------------ */
 export function SlideAcumulado({
-  tipo, volumen, operaciones, hasta, year, onAviso,
+  tipo, volumen, operaciones, hasta, year, onAviso, apartados,
 }: {
   tipo: 'ventas' | 'rentas';
+  /** Apartados vigentes sumados en un mes (se rotulan aparte). */
+  apartados?: { mes: number; monto: number; ops: number };
   volumen: number[];
   operaciones: number[];
   /** Último mes con datos (1-12) */
@@ -455,6 +458,7 @@ export function SlideAcumulado({
   const mejor = meses.indexOf(Math.max(...meses));
   const Icono = tipo === 'ventas' ? Building2 : House;
   const rango = `1 ene – ${hasta.dia} ${MESES_CORTOS[hasta.mes - 1].toLowerCase()} ${year}`;
+  const ap = apartados && apartados.ops > 0 && apartados.mes <= hasta.mes ? apartados : null;
   const fmtBar = (v: number) => (tipo === 'ventas' ? mxnM(v) : v >= 100_000 ? `$${Math.round(v / 1000)} mil` : mxn(v));
 
   return (
@@ -464,11 +468,11 @@ export function SlideAcumulado({
         <div className="sl-acum__izq">
           <span className="sl-ico"><Icono aria-hidden="true" strokeWidth={2.2} /></span>
           <p className="sl-eyebrow">Acumulado {year} · {rango}</p>
-          <h2 className="sl-h2">{tipo === 'ventas' ? 'Ventas cerradas' : 'Rentas cerradas'}</h2>
+          <h2 className="sl-h2">{tipo === 'ventas' ? 'Ventas cerradas' : 'Rentas cerradas'}{ap ? ' y apartadas' : ''}</h2>
           <p className="sl-cifra">{tipo === 'ventas' ? mxnM(total) : mxn(total)}</p>
           <p className="sl-cifra__sub">valor total de las operaciones</p>
           <div className="sl-stats sl-stats--col">
-            <p><strong>{totOps}</strong><span>operaciones cerradas</span></p>
+            <p><strong>{totOps}</strong><span>{ap ? `operaciones · incluye ${ap.ops} apartados de ${MESES_CORTOS[ap.mes - 1].toLowerCase()} (${tipo === 'ventas' ? mxnM(ap.monto) : mxn(ap.monto)})` : 'operaciones cerradas'}</span></p>
             <p><strong>{totOps ? (tipo === 'ventas' ? mxnM(total / totOps) : mxn(total / totOps)) : '—'}</strong><span>promedio por operación</span></p>
             <p><strong>{MESES_CORTOS[mejor]}</strong><span>mejor mes</span></p>
           </div>
@@ -480,7 +484,7 @@ export function SlideAcumulado({
               <div key={k} className={`sl-barra${k === mejor ? ' sl-barra--top' : ''}`}>
                 <span className="sl-barra__val">{v ? fmtBar(v) : '—'}</span>
                 <span className="sl-barra__col"><span style={{ height: `${Math.max(1.5, (v / tope) * 100)}%` }} /></span>
-                <span className="sl-barra__ops">{ops[k]} op{ops[k] === 1 ? '' : 's'}</span>
+                <span className="sl-barra__ops">{ops[k]} op{ops[k] === 1 ? '' : 's'}{ap && ap.mes === k + 1 ? ` · ${ap.ops} apart.` : ''}</span>
                 <span className="sl-barra__mes">{MESES_CORTOS[k]}</span>
               </div>
             ))}

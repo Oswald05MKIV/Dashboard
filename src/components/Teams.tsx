@@ -7,6 +7,7 @@ import type { Team, TotalTeam } from '../lib/teams';
 import { Estandarte, PALETA } from './civilizaciones';
 import MapaConquista from './MapaConquista';
 import { BotonCaptura, useAviso } from './TopsJulio';
+import { MESES_LARGOS } from '../config';
 import './tops-teams.css';
 
 const data = dashboardJson as unknown as DashboardData;
@@ -151,7 +152,10 @@ export default function Teams() {
           <h2 className="tt-title">Teams</h2>
           <p className="tt-sub">
             Seis civilizaciones con los indicadores sumados por equipo. Los montos son el total de la
-            operación de lo cerrado dentro del periodo.
+            operación de lo cerrado dentro del periodo
+            {data.apartadosEnCurso && data.apartadosEnCurso.mes >= periodo.desde && data.apartadosEnCurso.mes <= periodo.hasta
+              ? `; en ventas de ${MESES_LARGOS[data.apartadosEnCurso.mes - 1].toLowerCase()} también los apartados vigentes (corte ${data.apartadosEnCurso.corte}).`
+              : '.'}
           </p>
         </div>
         <div className="tt-acciones">

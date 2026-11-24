@@ -159,6 +159,8 @@ export function topsDelMes(data: DashboardData, m: number): DatosTops {
     renta: a.actividad.opcionadasRenta[i] || 0,
   })));
 
+  // Mes con apartados vigentes capturados: cuentan junto con los cierres.
+  const apV = data.apartadosEnCurso?.mes === m && data.apartadosEnCurso.opsVenta > 0;
   const minR = conMinimos ? MINIMO_RENTAS : 1;
   const minV = conMinimos ? MINIMO_VENTAS : 1;
   const ren = rankear(todos
@@ -202,8 +204,11 @@ export function topsDelMes(data: DashboardData, m: number): DatosTops {
         nota: `Propiedades captadas / opcionadas en ${mes}${enCurso}.` },
       rentas: { titulo: "Rentas cerradas", unidad: "rentas", sinMonto: true, minimo: conMinimos ? MINIMO_RENTAS : undefined, items: podio(ren), total: opsR, totalEtiqueta: `renta${opsR === 1 ? "" : "s"} cerrada${opsR === 1 ? "" : "s"} en la oficina`,
         nota: conMinimos ? `Quienes sumaron al menos $40,000 en rentas cerradas en ${mes}.` : `Rentas cerradas en ${mes}.` },
-      ventas: { titulo: "Ventas cerradas", unidad: "ventas", sinMonto: true, minimo: conMinimos ? MINIMO_VENTAS : undefined, items: podio(ven), total: opsV, totalEtiqueta: `venta${opsV === 1 ? "" : "s"} cerrada${opsV === 1 ? "" : "s"} en la oficina`,
-        nota: conMinimos ? `Quienes sumaron al menos $2,000,000 en ventas cerradas en ${mes}.` : `Ventas cerradas en ${mes}.` },
+      ventas: apV
+        ? { titulo: "Ventas cerradas y apartadas", unidad: "ventas", sinMonto: true, minimo: conMinimos ? MINIMO_VENTAS : undefined, items: podio(ven), total: opsV, totalEtiqueta: `venta${opsV === 1 ? "" : "s"} cerrada${opsV === 1 ? "" : "s"} o apartada${opsV === 1 ? "" : "s"} en la oficina`,
+          nota: `Quienes sumaron al menos $2 MDP en ventas cerradas y apartados vigentes en ${mes} (corte ${data.apartadosEnCurso.corte}).` }
+        : { titulo: "Ventas cerradas", unidad: "ventas", sinMonto: true, minimo: conMinimos ? MINIMO_VENTAS : undefined, items: podio(ven), total: opsV, totalEtiqueta: `venta${opsV === 1 ? "" : "s"} cerrada${opsV === 1 ? "" : "s"} en la oficina`,
+          nota: conMinimos ? `Quienes sumaron al menos $2,000,000 en ventas cerradas en ${mes}.` : `Ventas cerradas en ${mes}.` },
     },
     listas: { recorridosLeads, sinRecorridos, noOpcionaron, opcionaron: opc },
     rankingOpciones: mos,

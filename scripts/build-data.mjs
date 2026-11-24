@@ -852,6 +852,50 @@ const sumMonths = (pick) => Array.from({ length: 12 }, (_, i) => advisorsTotales
 
 const cierres2026All = ops.filter((o) => o.estatus === "CERRADA" && o.cierreY === YEAR && !o.esCredito2
   && (BAJAS_CUENTAN_EN_TOTALES || !esBaja(o.asesor)));
+/* ------------------------------------------------------------------ */
+/* 4.c) Apartados vigentes del mes en curso (captura manual)            */
+/*                                                                      */
+/* Oswaldo pasa la lista de apartados que hay "ahorita" y pide que      */
+/* cuenten en el mes en curso en todo el dashboard (Tops, acumulado de  */
+/* ventas, Teams, fichas). Se suman al volumen y operaciones de venta   */
+/* del mes, marcados como apartados; NO generan comisión, metas ni      */
+/* lados (eso solo con el cierre). En una compartida entre dos asesores */
+/* de la oficina, cada uno ve el monto completo en su ficha; la oficina */
+/* lo cuenta una sola vez.                                              */
+/* ------------------------------------------------------------------ */
+const APARTADOS_EN_CURSO = {
+  mes: 11,
+  corte: "23 nov 2026",
+  lista: [
+    { asesores: ["Erik Trotter Bustamante"], tipo: "VENTA", monto: 2420000 },
+    { asesores: ["Erik Trotter Bustamante"], tipo: "VENTA", monto: 3300000 },
+    { asesores: ["Erik Trotter Bustamante"], tipo: "VENTA", monto: 1080000 },
+    { asesores: ["Erik Trotter Bustamante"], tipo: "VENTA", monto: 145000 },
+    { asesores: ["Erik Trotter Bustamante"], tipo: "VENTA", monto: 4600000 },
+    { asesores: ["Erik Trotter Bustamante", "Mariana Vega"], tipo: "VENTA", monto: 2330000 },
+    { asesores: ["Erik Trotter Bustamante", "Christian Díaz Padilla"], tipo: "VENTA", monto: 4050000 },
+    { asesores: ["Mariana Vega"], tipo: "VENTA", monto: 1715000 },
+    { asesores: ["Mariana Vega"], tipo: "VENTA", monto: 3075000 },
+    { asesores: ["Héctor de la Peña"], tipo: "VENTA", monto: 890000 },
+    { asesores: ["Christian Díaz Padilla", "Mariana Vega"], tipo: "VENTA", monto: 1690000 },
+    { asesores: ["Christian Alvarado Martínez"], tipo: "VENTA", monto: 630000 },
+    { asesores: ["Mariana Vega"], tipo: "VENTA", monto: 700000 },
+  ],
+};
+{
+  const mi = APARTADOS_EN_CURSO.mes - 1;
+  for (const ap of APARTADOS_EN_CURSO.lista) {
+    for (const n of ap.asesores) {
+      const a = advisors.find((x) => strip(x.nombre) === strip(n));
+      if (!a) { validation.advertencias.push(`Apartados en curso: "${n}" no está en el roster`); continue; }
+      a.apartadosEnCurso = a.apartadosEnCurso ?? { ops: 0, monto: 0 };
+      a.apartadosEnCurso.ops++; a.apartadosEnCurso.monto += ap.monto;
+      if (ap.tipo === "VENTA") { a.volVentaMes[mi] += ap.monto; a.opsVentaMes[mi]++; }
+      else { a.volRentaMes[mi] += ap.monto; a.opsRentaMes[mi]++; }
+    }
+  }
+}
+
 const totals = {
   recorridos: sumBy((a) => a.totales.recorridos),
   opciones: sumBy((a) => a.totales.opciones),
@@ -1001,6 +1045,21 @@ const limpiarSocios = (lista) => lista.forEach((r) => { r.socios = r.socios.map(
 limpiarSocios(rankingLados);
 advisorsFinal.forEach((a) => a.ladosEquipo && limpiarSocios([a.ladosEquipo]));
 detalleEquipo.forEach((d) => { d.asesores = d.asesores.map(sinBaja); });
+// Apartados en curso: la oficina los cuenta una vez en el mes (sección 4.c)
+for (const ap of APARTADOS_EN_CURSO.lista) {
+  const t = ap.tipo === "VENTA" ? "Venta" : "Renta";
+  totals.series[`vol${t}`][APARTADOS_EN_CURSO.mes - 1] += ap.monto;
+  totals.series[`ops${t}`][APARTADOS_EN_CURSO.mes - 1]++;
+}
+const apartadosEnCurso = {
+  mes: APARTADOS_EN_CURSO.mes,
+  corte: APARTADOS_EN_CURSO.corte,
+  operaciones: APARTADOS_EN_CURSO.lista.length,
+  ventas: APARTADOS_EN_CURSO.lista.filter((x) => x.tipo === "VENTA").reduce((s2, x) => s2 + x.monto, 0),
+  rentas: APARTADOS_EN_CURSO.lista.filter((x) => x.tipo === "RENTA").reduce((s2, x) => s2 + x.monto, 0),
+  opsVenta: APARTADOS_EN_CURSO.lista.filter((x) => x.tipo === "VENTA").length,
+  opsRenta: APARTADOS_EN_CURSO.lista.filter((x) => x.tipo === "RENTA").length,
+};
 const ladosTerra = {
   operaciones: ldOps,
   ladosTotales: ldOps * 2,
@@ -1142,6 +1201,7 @@ const dashboard = {
   cohorte,
   leadsCuatrimestre,
   ladosTerra,
+  apartadosEnCurso,
   currentMonth, previousMonth,
   mesesDisponibles: [...mesesConDatos].sort((a, b) => a - b),
   generadoEl: new Date().toISOString(),
