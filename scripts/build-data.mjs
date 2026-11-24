@@ -238,6 +238,7 @@ const ASESORES_BAJA = [
   "Lorena Ramos Quevedo",
   "Christian Alvarado Martínez",
   "Héctor de la Peña",
+  "Pilar González Ávila",
 ];
 
 /** true  = sus operaciones ya cerradas siguen sumando a los totales de la oficina
