@@ -105,8 +105,8 @@ export interface Advisor {
   cierresDetalle: CierreDetalle[];
   /** Operaciones cerradas con otro asesor de la oficina (lado 1 y lado 2 RE/MAX Terra). */
   ladosEquipo?: LadosEquipoAsesor;
-  /** Apartados vigentes capturados a mano para el mes en curso (ya sumados en volVentaMes/opsVentaMes). */
-  apartadosEnCurso?: { ops: number; monto: number };
+  /** Apartados vigentes del mes en curso (aparte: no suman a cierres). */
+  apartadosEnCurso?: ApartadosAsesor;
 }
 
 export interface SocioLados { nombre: string; operaciones: number }
@@ -183,8 +183,8 @@ export interface DashboardData {
   cohorte: Cohorte;
   /** Acumulado anual de lados (lado 1 / lado 2 RE/MAX Terra) y reconocimiento al trabajo en equipo. */
   ladosTerra: LadosTerra;
-  /** Apartados vigentes que cuentan en el mes en curso (sumados a ventas/rentas de ese mes). */
-  apartadosEnCurso: { mes: number; corte: string; operaciones: number; ventas: number; rentas: number; opsVenta: number; opsRenta: number };
+  /** Apartados vigentes del mes en curso — se muestran aparte, NO se suman a cierres. */
+  apartadosEnCurso: { mes: number; corte: string; operaciones: number; ventas: number; rentas: number; opsVenta: number; opsRenta: number; porAsesor: (ApartadosAsesor & { nombre: string })[] };
   currentMonth: number;
   previousMonth: number | null;
   mesesDisponibles: number[];
@@ -244,3 +244,5 @@ export type SectionId =
   | "metas"
   | "ranking"
   | "configuracion";
+
+export interface ApartadosAsesor { mes: number; ops: number; monto: number; ventas: number; rentas: number }

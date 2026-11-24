@@ -11,7 +11,8 @@ import {
 import { BotonCaptura } from './TopsJulio';
 import type { ClaveTop, DatosTops, TopBloque, TopItem } from '../lib/tops';
 import { MESES_CORTOS } from '../config';
-import type { LadosTerra } from '../types';
+import type { DashboardData, LadosTerra } from '../types';
+import { nombreCorto } from '../lib/tops';
 import './diapositivas.css';
 
 export const mxn = (n: number) => n.toLocaleString('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 });
@@ -107,7 +108,7 @@ export function SlideTop({ datos, clave, onAviso }: { datos: DatosTops; clave: C
           {b.minimo && (
             <p className="sl-regla">
               <span>Mínimo para aparecer</span>
-              <strong>{mxn(b.minimo)}</strong>
+              <strong>{mxnM(b.minimo)}</strong>
               <em>en {b.unidad} {b.titulo.includes('apartad') ? 'cerradas y apartadas' : 'cerradas'} del mes</em>
             </p>
           )}
@@ -122,7 +123,7 @@ export function SlideTop({ datos, clave, onAviso }: { datos: DatosTops; clave: C
             <div className="sl-nadie">
               <Medal aria-hidden="true" strokeWidth={1.6} />
               <p className="sl-nadie__t">{b.minimo ? 'Este mes nadie alcanzó el mínimo' : 'Sin datos capturados este mes'}</p>
-              {b.minimo && <p className="sl-nadie__s">El cuadro se abre al llegar a {mxn(b.minimo)} en {b.unidad} cerradas.</p>}
+              {b.minimo && <p className="sl-nadie__s">El cuadro se abre al llegar a {mxnM(b.minimo)} en {b.unidad} cerradas.</p>}
             </div>
           ) : (
             <div className={`sl-podio sl-podio--${orden.length}`}>
@@ -366,7 +367,7 @@ export function SlideMinimo({ tipo, minimo, onAviso }: { tipo: 'ventas' | 'renta
           <p className="sl-pastilla">Nueva regla · Cuadro de {tipo}</p>
           <h2 className="sl-h1">Para aparecer en el Top de {tipo === 'ventas' ? 'Ventas' : 'Rentas'}</h2>
           <p className="sl-texto sl-texto--grande">
-            A partir de ahora, el cuadro de {tipo} reconoce a quienes sumen <strong>al menos {mxn(minimo)}</strong>&nbsp;en {tipo} cerradas
+            A partir de ahora, el cuadro de {tipo} reconoce a quienes sumen <strong>al menos {mxnM(minimo)}</strong>&nbsp;en {tipo} cerradas
             dentro del mes. Queremos celebrar las operaciones que mueven a la oficina.
           </p>
           <ul className="sl-puntos">
@@ -441,7 +442,7 @@ export function SlideAcumulado({
   tipo, volumen, operaciones, hasta, year, onAviso, apartados,
 }: {
   tipo: 'ventas' | 'rentas';
-  /** Apartados vigentes sumados en un mes (se rotulan aparte). */
+  /** Apartados vigentes del mes en curso: se muestran aparte, NO se suman al total. */
   apartados?: { mes: number; monto: number; ops: number };
   volumen: number[];
   operaciones: number[];
@@ -468,13 +469,16 @@ export function SlideAcumulado({
         <div className="sl-acum__izq">
           <span className="sl-ico"><Icono aria-hidden="true" strokeWidth={2.2} /></span>
           <p className="sl-eyebrow">Acumulado {year} · {rango}</p>
-          <h2 className="sl-h2">{tipo === 'ventas' ? 'Ventas cerradas' : 'Rentas cerradas'}{ap ? ' y apartadas' : ''}</h2>
+          <h2 className="sl-h2">{tipo === 'ventas' ? 'Ventas cerradas' : 'Rentas cerradas'}</h2>
           <p className="sl-cifra">{tipo === 'ventas' ? mxnM(total) : mxn(total)}</p>
           <p className="sl-cifra__sub">valor total de las operaciones</p>
           <div className="sl-stats sl-stats--col">
-            <p><strong>{totOps}</strong><span>{ap ? `operaciones · incluye ${ap.ops} apartados de ${MESES_CORTOS[ap.mes - 1].toLowerCase()} (${tipo === 'ventas' ? mxnM(ap.monto) : mxn(ap.monto)})` : 'operaciones cerradas'}</span></p>
+            <p><strong>{totOps}</strong><span>operaciones cerradas</span></p>
             <p><strong>{totOps ? (tipo === 'ventas' ? mxnM(total / totOps) : mxn(total / totOps)) : '—'}</strong><span>promedio por operación</span></p>
             <p><strong>{MESES_CORTOS[mejor]}</strong><span>mejor mes</span></p>
+            {ap && (
+              <p className="sl-stat--apartado"><strong>{tipo === 'ventas' ? mxnM(ap.monto) : mxn(ap.monto)}</strong><span>{ap.ops} apartado{ap.ops === 1 ? '' : 's'} en proceso en {MESES_CORTOS[ap.mes - 1].toLowerCase()} · aún no cerrados, no suman al total</span></p>
+            )}
           </div>
           <Marca />
         </div>
@@ -484,7 +488,7 @@ export function SlideAcumulado({
               <div key={k} className={`sl-barra${k === mejor ? ' sl-barra--top' : ''}`}>
                 <span className="sl-barra__val">{v ? fmtBar(v) : '—'}</span>
                 <span className="sl-barra__col"><span style={{ height: `${Math.max(1.5, (v / tope) * 100)}%` }} /></span>
-                <span className="sl-barra__ops">{ops[k]} op{ops[k] === 1 ? '' : 's'}{ap && ap.mes === k + 1 ? ` · ${ap.ops} apart.` : ''}</span>
+                <span className="sl-barra__ops">{ops[k]} op{ops[k] === 1 ? '' : 's'}{ap && ap.mes === k + 1 ? ` + ${ap.ops} apart.` : ''}</span>
                 <span className="sl-barra__mes">{MESES_CORTOS[k]}</span>
               </div>
             ))}
@@ -765,6 +769,54 @@ export function SlideRankingLados({
               </div>
             ))}
           </div>
+        </div>
+      </div>
+    </Diapositiva>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Apartados en proceso del mes (aparte de los cierres)                 */
+/* ------------------------------------------------------------------ */
+export function SlideApartados({
+  ap, periodo, mes, onAviso,
+}: {
+  ap: DashboardData['apartadosEnCurso'];
+  periodo: string;
+  mes: string;
+  onAviso: (m: string) => void;
+}) {
+  const items: TopItem[] = [];
+  let lugar = 0, prev = -1;
+  ap.porAsesor.forEach((a, i) => {
+    if (a.ops !== prev) { lugar = i + 1; prev = a.ops; }
+    items.push({ lugar, nombre: nombreCorto(a.nombre), valor: a.ops, venta: a.ventas, renta: a.rentas } as TopItem);
+  });
+  const total = ap.ventas + ap.rentas;
+  return (
+    <Diapositiva etiqueta="Apartados en proceso" archivo={`apartados-en-proceso-${periodo}`} tema="lista sl--ventas" onAviso={onAviso}>
+      <Building2 className="sl-agua" aria-hidden="true" strokeWidth={1} />
+      <div className="sl-lista">
+        <div className="sl-lista__izq">
+          <span className="sl-ico"><Building2 aria-hidden="true" strokeWidth={2.2} /></span>
+          <p className="sl-eyebrow">{periodo} · corte {ap.corte}</p>
+          <h2 className="sl-h2">Apartados en proceso</h2>
+          <p className="sl-texto">Operaciones apartadas que siguen en proceso en {mes}. Todavía no están cerradas: cuentan como cierre cuando se firme.</p>
+          <div className="sl-kpis">
+            <p><strong>{ap.operaciones}</strong><span>apartados vigentes</span></p>
+            <p><strong>{mxnM(total)}</strong><span>valor total en proceso</span></p>
+          </div>
+          <Marca />
+        </div>
+        <div className="sl-lista__der">
+          <Tabla items={items} conLugar columnas={[
+            { titulo: 'Apartados', valor: (i) => i.valor, fuerte: true, barra: true },
+            { titulo: 'Venta', valor: (i) => i.venta ?? 0, angosta: true },
+            { titulo: 'Renta', valor: (i) => i.renta ?? 0, angosta: true },
+          ]} />
+          {ap.porAsesor.length < ap.operaciones && (
+            <p className="sl-texto sl-texto--chico">Los apartados compartidos entre dos asesores aparecen con cada uno; el total de la oficina los cuenta una vez.</p>
+          )}
         </div>
       </div>
     </Diapositiva>

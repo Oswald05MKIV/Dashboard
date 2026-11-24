@@ -183,6 +183,14 @@ function AsesorDetalle({ data, advisor: a, onBack }: { data: DashboardData; advi
             <div className="mini-stat"><div className="v num">{fNum(a.totales.apartados)}</div><div className="l">Apartados {data.year}</div></div>
           </div>
           {pi !== null && <div style={{ marginBottom: 12 }}><Delta actual={cie.actual} anterior={cie.anterior} /></div>}
+          {a.apartadosEnCurso && (
+            <div className="mini-stat" style={{ marginBottom: 12, textAlign: "left" }}>
+              <div className="v num">{fNum(a.apartadosEnCurso.ops)}</div>
+              <div className="l">
+                Apartado{a.apartadosEnCurso.ops === 1 ? "" : "s"} en proceso este mes · {fMoney(a.apartadosEnCurso.monto)} (aún no cerrados, no suman a sus cierres)
+              </div>
+            </div>
+          )}
           {a.ladosEquipo && (
             <div className="mini-stat" style={{ marginBottom: 12, textAlign: "left" }}>
               <div className="v num">{fNum(a.ladosEquipo.operaciones)}</div>

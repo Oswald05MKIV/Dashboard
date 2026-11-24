@@ -10,6 +10,15 @@ import { BotonCaptura, useAviso } from './TopsJulio';
 import { MESES_LARGOS } from '../config';
 import './tops-teams.css';
 
+const DATA_AP = (dashboardJson as unknown as DashboardData).apartadosEnCurso;
+/** Apartados en proceso del mes en curso por integrante (aparte de las ventas cerradas). */
+const apartadosTeam = (team: Team) => {
+  if (!DATA_AP) return [];
+  return team.integrantes
+    .map((i) => ({ nombre: i.nombre, ops: DATA_AP.porAsesor.find((p) => p.nombre === i.canonico)?.ops ?? 0 }))
+    .filter((p) => p.ops > 0);
+};
+
 const data = dashboardJson as unknown as DashboardData;
 
 const mxn = (n: number) =>
@@ -123,6 +132,12 @@ function TarjetaTeam({ team, insignias, onAviso }: { team: Team; insignias: stri
           </tr>
         </tfoot>
       </table>
+      {apartadosTeam(team).length > 0 && (
+        <p className="tt-equipo-lados">
+          📌 <strong>{apartadosTeam(team).reduce((x, p) => x + p.ops, 0)}</strong> apartados en proceso en {MESES_LARGOS[DATA_AP!.mes - 1].toLowerCase()} (aún sin cerrar)
+          <span> · {apartadosTeam(team).map((p) => `${p.nombre} ${p.ops}`).join(', ')}</span>
+        </p>
+      )}
       <p className="tt-equipo-lados">
         🤝 <strong>{team.total.equipo}</strong> participaci{team.total.equipo === 1 ? 'ón' : 'ones'} en operaciones con los 2 lados en la oficina
         {team.integrantes.some((p) => p.equipo > 0) && (
@@ -152,10 +167,7 @@ export default function Teams() {
           <h2 className="tt-title">Teams</h2>
           <p className="tt-sub">
             Seis civilizaciones con los indicadores sumados por equipo. Los montos son el total de la
-            operación de lo cerrado dentro del periodo
-            {data.apartadosEnCurso && data.apartadosEnCurso.mes >= periodo.desde && data.apartadosEnCurso.mes <= periodo.hasta
-              ? `; en ventas de ${MESES_LARGOS[data.apartadosEnCurso.mes - 1].toLowerCase()} también los apartados vigentes (corte ${data.apartadosEnCurso.corte}).`
-              : '.'}
+            operación de lo cerrado dentro del periodo.
           </p>
         </div>
         <div className="tt-acciones">

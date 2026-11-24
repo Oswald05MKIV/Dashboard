@@ -856,12 +856,11 @@ const cierres2026All = ops.filter((o) => o.estatus === "CERRADA" && o.cierreY ==
 /* 4.c) Apartados vigentes del mes en curso (captura manual)            */
 /*                                                                      */
 /* Oswaldo pasa la lista de apartados que hay "ahorita" y pide que      */
-/* cuenten en el mes en curso en todo el dashboard (Tops, acumulado de  */
-/* ventas, Teams, fichas). Se suman al volumen y operaciones de venta   */
-/* del mes, marcados como apartados; NO generan comisión, metas ni      */
-/* lados (eso solo con el cierre). En una compartida entre dos asesores */
-/* de la oficina, cada uno ve el monto completo en su ficha; la oficina */
-/* lo cuenta una sola vez.                                              */
+/* se vean en el mes en curso en todo el dashboard (Tops, Operaciones,  */
+/* Teams, fichas) COMO APARTADOS, aparte: NO se suman a ventas/rentas    */
+/* cerradas, comisión, metas ni lados (eso solo con el cierre).         */
+/* En una compartida entre dos asesores de la oficina, cada uno lo ve   */
+/* en su ficha; la oficina lo cuenta una sola vez.                      */
 /* ------------------------------------------------------------------ */
 const APARTADOS_EN_CURSO = {
   mes: 11,
@@ -888,10 +887,9 @@ const APARTADOS_EN_CURSO = {
     for (const n of ap.asesores) {
       const a = advisors.find((x) => strip(x.nombre) === strip(n));
       if (!a) { validation.advertencias.push(`Apartados en curso: "${n}" no está en el roster`); continue; }
-      a.apartadosEnCurso = a.apartadosEnCurso ?? { ops: 0, monto: 0 };
+      a.apartadosEnCurso = a.apartadosEnCurso ?? { mes: mi + 1, ops: 0, monto: 0, ventas: 0, rentas: 0 };
       a.apartadosEnCurso.ops++; a.apartadosEnCurso.monto += ap.monto;
-      if (ap.tipo === "VENTA") { a.volVentaMes[mi] += ap.monto; a.opsVentaMes[mi]++; }
-      else { a.volRentaMes[mi] += ap.monto; a.opsRentaMes[mi]++; }
+      a.apartadosEnCurso[ap.tipo === "VENTA" ? "ventas" : "rentas"]++;
     }
   }
 }
@@ -1045,12 +1043,7 @@ const limpiarSocios = (lista) => lista.forEach((r) => { r.socios = r.socios.map(
 limpiarSocios(rankingLados);
 advisorsFinal.forEach((a) => a.ladosEquipo && limpiarSocios([a.ladosEquipo]));
 detalleEquipo.forEach((d) => { d.asesores = d.asesores.map(sinBaja); });
-// Apartados en curso: la oficina los cuenta una vez en el mes (sección 4.c)
-for (const ap of APARTADOS_EN_CURSO.lista) {
-  const t = ap.tipo === "VENTA" ? "Venta" : "Renta";
-  totals.series[`vol${t}`][APARTADOS_EN_CURSO.mes - 1] += ap.monto;
-  totals.series[`ops${t}`][APARTADOS_EN_CURSO.mes - 1]++;
-}
+// Apartados en curso: se muestran aparte, no se suman a los cierres (sección 4.c)
 const apartadosEnCurso = {
   mes: APARTADOS_EN_CURSO.mes,
   corte: APARTADOS_EN_CURSO.corte,
@@ -1059,6 +1052,10 @@ const apartadosEnCurso = {
   rentas: APARTADOS_EN_CURSO.lista.filter((x) => x.tipo === "RENTA").reduce((s2, x) => s2 + x.monto, 0),
   opsVenta: APARTADOS_EN_CURSO.lista.filter((x) => x.tipo === "VENTA").length,
   opsRenta: APARTADOS_EN_CURSO.lista.filter((x) => x.tipo === "RENTA").length,
+  // Por asesor vigente (las bajas solo suman en el total de la oficina)
+  porAsesor: advisorsFinal.filter((a) => a.apartadosEnCurso)
+    .map((a) => ({ nombre: a.nombre, ...a.apartadosEnCurso }))
+    .sort((x, y) => y.ops - x.ops || y.monto - x.monto),
 };
 const ladosTerra = {
   operaciones: ldOps,

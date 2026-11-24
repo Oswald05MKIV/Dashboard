@@ -5,7 +5,7 @@ import { MESES_CORTOS, MESES_LARGOS } from "../config";
 import { fMoney, fNum } from "../lib/metrics";
 import { Card, Kpi, MonthChip, PageHead } from "../components/ui";
 import { ComparativoMensual } from "../components/charts";
-import { registrarCortos, SlideAcumulado, SlideLados, SlideRankingLados } from "../components/Diapositivas";
+import { registrarCortos, SlideAcumulado, SlideApartados, SlideLados, SlideRankingLados } from "../components/Diapositivas";
 import { useAviso } from "../components/TopsJulio";
 import "../components/tops-teams.css";
 
@@ -69,6 +69,10 @@ export function Operaciones({ data }: { data: DashboardData }) {
             apartados={data.apartadosEnCurso && { mes: data.apartadosEnCurso.mes, monto: data.apartadosEnCurso.ventas, ops: data.apartadosEnCurso.opsVenta }} />
           <SlideAcumulado tipo="rentas" volumen={data.totals.series.volRenta} operaciones={data.totals.series.opsRenta ?? []} hasta={hoy} year={data.year} onAviso={mostrar}
             apartados={data.apartadosEnCurso && { mes: data.apartadosEnCurso.mes, monto: data.apartadosEnCurso.rentas, ops: data.apartadosEnCurso.opsRenta }} />
+          {data.apartadosEnCurso?.operaciones > 0 && (
+            <SlideApartados ap={data.apartadosEnCurso} periodo={`${MESES_LARGOS[data.apartadosEnCurso.mes - 1]} ${data.year}`}
+              mes={MESES_LARGOS[data.apartadosEnCurso.mes - 1].toLowerCase()} onAviso={mostrar} />
+          )}
         </div>
         {aviso && <div className="tt-toast">{aviso}</div>}
       </div>
